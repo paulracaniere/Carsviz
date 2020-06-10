@@ -39,13 +39,13 @@ possibilities = [[0, 1, 2], [0, 1, 3], [0, 1, 4], [0, 1, 5],
 print("Reading dataset cars.csv ...")
 dataset = pd.read_csv("../data/cars.csv", delimiter=";", skiprows=[1])
 
+# Standardize all attributes
 scaled_category = []
 for category in engine_specs:
     column = dataset[category]
     column = column[column != 0]
     column = pd.Series(preprocessing.scale(column.values), name=column.name + "_norm", index=column.index)
     scaled_category.append(column)
-
 dataset_scaled = pd.concat(scaled_category, axis=1, sort=False)
 
 pca = PCA(n_components=2)
@@ -61,8 +61,12 @@ for possibility in possibilities:
     subset = subset[condition]
     subset = pd.DataFrame(preprocessing.scale(subset.values), columns=subset.columns, index=subset.index)
 
+    # Adding the computed coordinates to the list
     reduced.append(pd.DataFrame(pca.fit_transform(subset), columns=["PC1_" + "".join([str(i) for i in possibility]), "PC2_" + "".join([str(i) for i in possibility])], index=subset.index))
 
+# Concatenating all columns
 result = pd.concat([dataset, dataset_scaled] + reduced, axis=1, sort=False)
 
+# Printing the results in a CSV file
 result.to_csv("../data/processed_cars.csv", index=False)
+
