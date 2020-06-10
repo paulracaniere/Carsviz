@@ -65,6 +65,7 @@ for possibility in possibilities:
     reduced.append(pd.DataFrame(pca.fit_transform(subset), columns=["PC1_" + "".join([str(i) for i in possibility]), "PC2_" + "".join([str(i) for i in possibility])], index=subset.index))
 
 # Concatenating all columns
+dataset.replace(0.0, float("NaN"), inplace=True)
 result = pd.concat([dataset, dataset_scaled] + reduced, axis=1, sort=False)
 
 # Printing the results in a CSV file
