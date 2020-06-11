@@ -10,7 +10,7 @@ This project contains the IGR204 project based on the `cars.csv` dataset. The au
 - Thibaud Moutsita
 - Paul Racanière
 
-## Download
+## Installation
 
 To clone the project, use the CLI and type:
 
@@ -18,20 +18,12 @@ To clone the project, use the CLI and type:
 git clone https://github.com/paulracaniere/Carsviz.git
 ```
 
-For memory reasons, the data is not provided in this repository, please download `cars.csv` and put it into a new `data/` directory. It can be downloaded [here](https://perso.telecom-paristech.fr/eagan/class/igr204/data/cars.csv).
+To install the data please install [curl](https://curl.haxx.se/).
 
-## Preprocessing
+To be able to run the preprocessing, please install [pandas](https://pandas.pydata.org/) and also [scikit-learn](https://scikit-learn.org/stable/).
 
-To obtain the preprocessed `.csv` file, make sure you have the following Python libraries:
+For memory reasons, the data is not provided in this repository. You can find them [here](https://perso.telecom-paristech.fr/eagan/class/igr204/data/cars.csv).
 
-- Pandas
-- Scikit-learn
-
-and run:
-
-```bash
-cd python
-python script.py
-```
+Use the command `make` to install and preprocess the data.
 
 This will generate the `processed_cars.csv` in the `data/` directory.
