@@ -1,7 +1,14 @@
 const margin = {top: 20, right: 20, bottom: 40, left: 40};
 const canvasWidth = 600 - margin.left - margin.right;
 const canvasHeight = 600 - margin.top - margin.bottom;
+
 let dataset = [];
+
+let xValue = 0;
+let yValue = 0;
+let xScale = 0;
+let yScale = 0;
+
 
 // create SVG canvas
 let svg = d3.select("body")
@@ -109,4 +116,25 @@ function draw() {
     .attr("dy", "1.5em")
     .attr("text-anchor", "middle")
     .text("component 2");
+
+    // legend
+/*    var legend = svg.selectAll(".legend")
+    .data(color.domain())
+    .enter()
+    .append("g")
+    .attr("class", "legend")
+    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+    legend.append("rect")
+    .attr("x", canvasWidth - 18)
+    .attr("width", 18)
+    .attr("height", 18)
+    .style("fill", color);
+
+    legend.append("text")
+    .attr("x", canvasWidth - 24)
+    .attr("y", 9)
+    .attr("dy", ".35em")
+    .style("text-anchor", "end")
+    .text(function(d) { return d; })*/
 }
