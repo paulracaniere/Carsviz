@@ -131,16 +131,15 @@ function draw() {
     .attr("class", "legend")
     .attr("transform", (d, i) => "translate(0," + i * 20 + ")" );
 
-    legend.append("rect")
-    .attr("x", canvasWidth - 18)
-    .attr("width", 18)
-    .attr("height", 18)
-    .style("fill", colorScale);
+    legend.append("circle")
+    .attr("cx", canvasWidth - 18)
+    .attr("r", 6)
+    .style("fill", colorScale)
+    .attr("stroke", "black");
 
     legend.append("text")
-    .attr("x", canvasWidth - 24)
-    .attr("y", 9)
-    .attr("dy", ".35em")
+    .attr("x", canvasWidth - 27)
+    .attr("y", 6)
     .style("text-anchor", "end")
     .text( (d) => d );
 }
