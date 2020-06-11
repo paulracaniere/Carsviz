@@ -48,8 +48,8 @@ d3.text('data/processed_cars.csv', (error, raw) => {
         console.log("Last row: ", dataset[dataset.length - 1]);
 
         // x, y setup
-        xValue = function(d) { return d.acceleration; };
-        yValue = function(d) { return d.displacement; };
+        xValue = (d) => d.acceleration;
+        yValue = (d) => d.displacement;
 
         xScale = d3.scaleLinear()
             // avoid data to overlap axis
@@ -60,7 +60,7 @@ d3.text('data/processed_cars.csv', (error, raw) => {
             .range([canvasHeight, 0]);
 
         // color setup
-        colorValue = function(d) { return d.continent };
+        colorValue = (d) => d.continent;
         colorScale = d3.scaleOrdinal(d3.schemeCategory10);
         
     }
@@ -129,7 +129,7 @@ function draw() {
     .enter()
     .append("g")
     .attr("class", "legend")
-    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+    .attr("transform", (d, i) => "translate(0," + i * 20 + ")" );
 
     legend.append("rect")
     .attr("x", canvasWidth - 18)
@@ -142,5 +142,5 @@ function draw() {
     .attr("y", 9)
     .attr("dy", ".35em")
     .style("text-anchor", "end")
-    .text(function(d) { return d; })
+    .text( (d) => d );
 }
