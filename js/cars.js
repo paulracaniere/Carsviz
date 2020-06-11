@@ -4,11 +4,12 @@ const canvasHeight = 600 - margin.top - margin.bottom;
 
 let dataset = [];
 
-let xValue = 0;
-let yValue = 0;
-let xScale = 0;
-let yScale = 0;
-
+let xValue;
+let yValue;
+let xScale;
+let yScale;
+let colorValue;
+let colorScale;
 
 // create SVG canvas
 let svg = d3.select("body")
@@ -46,7 +47,7 @@ d3.text('data/processed_cars.csv', (error, raw) => {
         console.log("Second row: ", dataset[1]);
         console.log("Last row: ", dataset[dataset.length - 1]);
 
-        // scales
+        // x, y setup
         xValue = function(d) { return d.acceleration; };
         yValue = function(d) { return d.displacement; };
 
@@ -57,6 +58,11 @@ d3.text('data/processed_cars.csv', (error, raw) => {
         yScale = d3.scaleLinear()
             .domain([d3.min(dataset, yValue)-2, d3.max(dataset, yValue)+2])
             .range([canvasHeight, 0]);
+
+        // color setup
+        colorValue = function(d) { return d.continent };
+        colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+        
     }
 
     draw();
@@ -73,7 +79,7 @@ function draw() {
     .attr("r", 3)
     .attr("cx", (d) => xScale(xValue(d)))
     .attr("cy", (d) => yScale(yValue(d)))
-    .attr("fill", "red")
+    .attr("fill", (d) => colorScale(colorValue(d)))
     .attr("stroke", "black")
     // tooltip with smooth transitions when hovered
     .on("mouseover", function(d) {
@@ -116,25 +122,5 @@ function draw() {
     .attr("dy", "1.5em")
     .attr("text-anchor", "middle")
     .text("component 2");
-
-    // legend
-/*    var legend = svg.selectAll(".legend")
-    .data(color.domain())
-    .enter()
-    .append("g")
-    .attr("class", "legend")
-    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
-
-    legend.append("rect")
-    .attr("x", canvasWidth - 18)
-    .attr("width", 18)
-    .attr("height", 18)
-    .style("fill", color);
-
-    legend.append("text")
-    .attr("x", canvasWidth - 24)
-    .attr("y", 9)
-    .attr("dy", ".35em")
-    .style("text-anchor", "end")
-    .text(function(d) { return d; })*/
+   
 }
