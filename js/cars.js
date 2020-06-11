@@ -62,7 +62,6 @@ d3.text('data/processed_cars.csv', (error, raw) => {
         // color setup
         colorValue = (d) => d.continent;
         colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-        
     }
 
     draw();
@@ -104,7 +103,7 @@ function draw() {
     svg.append("text")
     .attr("class", "label")
     .attr("x", canvasWidth/2)
-    .attr("y", canvasHeight + margin.bottom)
+    .attr("y", canvasHeight + margin.bottom - 4)
     .attr("text-anchor", "middle")
     .text("component 1");
 
@@ -131,12 +130,14 @@ function draw() {
     .attr("class", "legend")
     .attr("transform", (d, i) => "translate(0," + i * 20 + ")" );
 
+    // legend shapes
     legend.append("circle")
     .attr("cx", canvasWidth - 18)
     .attr("r", 6)
     .style("fill", colorScale)
     .attr("stroke", "black");
 
+    // legend labels
     legend.append("text")
     .attr("x", canvasWidth - 27)
     .attr("y", 6)
