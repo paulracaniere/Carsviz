@@ -18,8 +18,7 @@ let tooltip = d3.select("body")
 
 
 d3.text('data/processed_cars.csv', (error, raw) => {
-    let dsv = d3.dsvFormat(',')
-    dataset = dsv.parse(raw, (d) => {
+    dataset = d3.csvParse(raw, (d) => {
         return {
             car: d.Car,
             mpg: +d.MPG,
@@ -32,8 +31,6 @@ d3.text('data/processed_cars.csv', (error, raw) => {
             continent: d.Origin,
         };
     });
-    dataset.splice(0, 1);
-
     console.log("Loaded " + dataset.length + " rows.");
 
     if (dataset.length > 0) {
@@ -89,6 +86,7 @@ function draw() {
     .attr("class", "x axis")
     .attr("transform", "translate(0, " + canvasHeight + ")")
     .call(d3.axisBottom(xScale))
+    
     // x axis label
     svg.append("text")
     .attr("class", "label")
@@ -101,6 +99,7 @@ function draw() {
     svg.append("g")
     .attr("class", "y axis")
     .call(d3.axisRight(yScale));
+    
     // y axis label
     svg.append("text")
     .attr("class", "label")
