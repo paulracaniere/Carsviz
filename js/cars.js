@@ -12,7 +12,7 @@ let colorValue;
 let colorScale;
 
 const engineSpecs = ["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
-let setOfEngineCharIndices = new Set([0, 1, 2, 3, 4, 5]);
+let setOfEngineCharIndices = new Set([0, 1]);
 
 function CSVDataParser(listOfIndices) {
     let k1 = "", k2 = "";
@@ -66,91 +66,144 @@ let svg = d3.select("body")
 let tooltip = d3.select("body")
                 .append("div");
 
+function loadData() {
+    d3.text('data/processed_cars.csv', (error, raw) => {
+        dataset = d3.csvParse(raw, CSVDataParser([...setOfEngineCharIndices]));
+        console.log("Loaded " + dataset.length + " rows.");
 
-d3.text('data/processed_cars.csv', (error, raw) => {
-    dataset = d3.csvParse(raw, CSVDataParser([...setOfEngineCharIndices]));
-    console.log("Loaded " + dataset.length + " rows.");
+        if (dataset.length > 0) {
+            // test data loading
+            console.log("11th row: ", dataset[11]);
+            console.log("12th row: ", dataset[12]);
+            console.log("Last row: ", dataset[dataset.length - 1]);
 
-    if (dataset.length > 0) {
-        // test data loading
-        console.log("First row: ", dataset[0]);
-        console.log("Second row: ", dataset[1]);
-        console.log("Last row: ", dataset[dataset.length - 1]);
+            // x, y setup
+            xValue = (d) => d.PC1;
+            yValue = (d) => d.PC2;
 
-        // x, y setup
-        xValue = (d) => d.acceleration;
-        yValue = (d) => d.displacement;
+            xScale = d3.scaleLinear()
+                // avoid data to overlap axis
+                .domain([d3.min(dataset, xValue)-2, d3.max(dataset, xValue)+2])
+                .range([0, canvasWidth]);
+            yScale = d3.scaleLinear()
+                .domain([d3.min(dataset, yValue)-2, d3.max(dataset, yValue)+2])
+                .range([canvasHeight, 0]);
 
-        xScale = d3.scaleLinear()
-            // avoid data to overlap axis
-            .domain([d3.min(dataset, xValue)-2, d3.max(dataset, xValue)+2])
-            .range([0, canvasWidth]);
-        yScale = d3.scaleLinear()
-            .domain([d3.min(dataset, yValue)-2, d3.max(dataset, yValue)+2])
-            .range([canvasHeight, 0]);
+            // color setup
+            colorValue = (d) => d.continent;
+            colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+        }
 
-        // color setup
-        colorValue = (d) => d.continent;
-        colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-    }
+        draw();
+    });
+}
 
-    draw();
-})
+loadData();
+
+// Interactivity
+// FIXME: Remove that panel when interactivity panel is finished
+let interactivity_div = d3.select("body").append("div");
+interactivity_div.append("h2").text("Filters for visualisation:")
+engineSpecs.forEach((spec) => {
+    let zone = interactivity_div.append("div");
+    zone.append("input")
+        .attr("type", "checkbox")
+        .attr("id", spec)
+        .attr("name", spec)
+        .property("checked", setOfEngineCharIndices.has(engineSpecs.indexOf(spec)))
+        .on("change", () => {
+            if (setOfEngineCharIndices.has(engineSpecs.indexOf(spec))) {
+                setOfEngineCharIndices.delete(engineSpecs.indexOf(spec));
+            } else {
+                setOfEngineCharIndices.add(engineSpecs.indexOf(spec));
+            }
+            console.log([...setOfEngineCharIndices]);
+            loadData();
+        });
+    zone.append("label")
+        .attr("for", spec)
+        .text(spec);
+});
 
 
 function draw() {
     // draw data as dots
-    svg.selectAll(".dot")
-    .data(dataset)
-    .enter()
-    .append("circle")
-    .attr("class", "dot")
-    .attr("r", 3)
-    .attr("cx", (d) => xScale(xValue(d)))
-    .attr("cy", (d) => yScale(yValue(d)))
-    .attr("fill", (d) => colorScale(colorValue(d)))
-    .attr("stroke", "black")
-    // tooltip with smooth transitions when hovered
-    .on("mouseover", function(d) {
-        tooltip.transition()
-        .duration(300)
-        .style("opacity", .8);
-        tooltip.html("Model: " + d.car + "<br>Year: " + d.year + "<br>Origin: " + d.continent);
-    })
-    .on("mouseout", function(d) {
-        tooltip.transition()
-        .duration(500)
-        .style("opacity", 0);
-    });
+    let data =  svg.selectAll(".dot")
+                    .data(dataset);
 
-    // x axis
-    svg.append("g")
-    .attr("class", "x axis")
-    .attr("transform", "translate(0, " + canvasHeight + ")")
-    .call(d3.axisBottom(xScale))
-    
-    // x axis label
-    svg.append("text")
-    .attr("class", "label")
-    .attr("x", canvasWidth/2)
-    .attr("y", canvasHeight + margin.bottom - 4)
-    .attr("text-anchor", "middle")
-    .text("component 1");
+    // New data
+    data.enter()
+        .append("circle")
+        .attr("class", "dot")
+        .attr("r", 3)
+        .attr("stroke", "black")
+        .attr("fill", (d) => colorScale(colorValue(d)))
+        // tooltip with smooth transitions when hovered
+        .on("mouseover", function(d) {
+            tooltip.transition()
+            .duration(300)
+            .style("opacity", .8);
+            tooltip.html("Model: " + d.car + "<br>Year: " + d.year + "<br>Origin: " + d.continent);
+        })
+        .on("mouseout", function(d) {
+            tooltip.transition()
+            .duration(500)
+            .style("opacity", 0);
+        })
+        .transition()
+        .duration(1000)
+        .attr("cx", (d) => xScale(xValue(d)))
+        .attr("cy", (d) => yScale(yValue(d)));
 
-    // y axis
-    svg.append("g")
-    .attr("class", "y axis")
-    .call(d3.axisRight(yScale));
+    // Updated data
+    data.attr("fill", (d) => colorScale(colorValue(d)))
+        // tooltip with smooth transitions when hovered
+        .on("mouseover", function(d) {
+            tooltip.transition()
+            .duration(300)
+            .style("opacity", .8);
+            tooltip.html("Model: " + d.car + "<br>Year: " + d.year + "<br>Origin: " + d.continent);
+        })
+        .on("mouseout", function(d) {
+            tooltip.transition()
+            .duration(500)
+            .style("opacity", 0);
+        })
+        .transition()
+        .duration(1000)
+        .attr("cx", (d) => xScale(xValue(d)))
+        .attr("cy", (d) => yScale(yValue(d)))
+        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0) ? 0.0 : 1.0);
+
+    // FIXME: Show axis when only 2 variables displayed
+    // // x axis
+    // svg.append("g")
+    // .attr("class", "x axis")
+    // .attr("transform", "translate(0, " + canvasHeight + ")")
+    // .call(d3.axisBottom(xScale))
     
-    // y axis label
-    svg.append("text")
-    .attr("class", "label")
-    .attr("transform", "rotate(-90)")
-    .attr("y", -margin.left)
-    .attr("x", -(canvasHeight/2))
-    .attr("dy", "1.5em")
-    .attr("text-anchor", "middle")
-    .text("component 2");
+    // // x axis label
+    // svg.append("text")
+    // .attr("class", "label")
+    // .attr("x", canvasWidth/2)
+    // .attr("y", canvasHeight + margin.bottom - 4)
+    // .attr("text-anchor", "middle")
+    // .text("component 1");
+
+    // // y axis
+    // svg.append("g")
+    // .attr("class", "y axis")
+    // .call(d3.axisRight(yScale));
+    
+    // // y axis label
+    // svg.append("text")
+    // .attr("class", "label")
+    // .attr("transform", "rotate(-90)")
+    // .attr("y", -margin.left)
+    // .attr("x", -(canvasHeight/2))
+    // .attr("dy", "1.5em")
+    // .attr("text-anchor", "middle")
+    // .text("component 2");
    
    // legend
     var legend = svg.selectAll(".legend")
