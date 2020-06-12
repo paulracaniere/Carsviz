@@ -4,12 +4,20 @@
 {
     const min = 5;
     const max = 15;
-    const attr = [("MPG", min, max)];
+    const attr = [("MPG", min, max, function(h) {
+        handle.attr("cx", x(h));
+        console.log(h);
+    })];
+    const handlers = [ function(h) {
+        handle.attr("cx", x(h));
+        console.log(h);
+    }];
 
-    const svg = d3.select("body").append("svg")
+    const filters_div = d3.select("body").append("svg");
+    const svg = filters_div.append("svg")
         .attr("id", "filters_canvas")
-        .attr("width","960")
-        .attr("height", "500");
+        .attr("width","300")
+        .attr("height", "200");
 
     const margin = {right: 50, left: 50},
         width = +svg.attr("width") - margin.left - margin.right,
@@ -34,7 +42,7 @@
         .attr("class", "track-overlay")
         .call(d3.drag()
             .on("start.interrupt", function() { slider.interrupt(); })
-            .on("start drag", function() { hue(x.invert(d3.event.x)); }));
+            .on("start drag", function() { handlers[0](x.invert(d3.event.x)); }));
 
     const handle = slider.insert("circle", ".track-overlay")
         .attr("class", "handle")
@@ -44,11 +52,6 @@
         .duration(750)//duration of the intro
         .tween("hue", function() {
             var i = d3.interpolate(0, 70); //range
-            return function(t) { hue(i(t)); };
+            return function(t) { handlers[0](i(t)); };
         });
-
-    function hue(h) {
-        handle.attr("cx", x(h));
-        console.log(h);
-    }
 }
