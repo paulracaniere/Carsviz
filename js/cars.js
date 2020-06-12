@@ -3,7 +3,6 @@ const canvasWidth = 600 - margin.left - margin.right;
 const canvasHeight = 600 - margin.top - margin.bottom;
 
 let dataset = [];
-
 let xValue;
 let yValue;
 let xScale;
