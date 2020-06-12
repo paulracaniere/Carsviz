@@ -11,6 +11,22 @@ let yScale;
 let colorValue;
 let colorScale;
 
+
+
+let correlation = [
+    {
+        name: "MPG",
+        x: 29.5,
+        y: 30.2
+    },
+    {
+        name:"Cylinders",
+        x: -40.2,
+        y: 10.4
+    }
+
+]
+
 // create SVG canvas
 let svg = d3.select("body")
             .append("svg")
@@ -23,6 +39,15 @@ let svg = d3.select("body")
 // text area for the tooltip
 let tooltip = d3.select("body")
                 .append("div");
+
+
+let coorelationCircle = d3.select("body")
+                            .append("svg")
+                            .attr("id", "correlation")
+                            .attr("width", canvasWidth/2 + margin.left + margin.right)
+                            .attr("height", canvasHeight/2 + margin.top + margin.bottom)
+                            .append("g")
+                            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
 d3.text('data/processed_cars.csv', (error, raw) => {
@@ -63,6 +88,11 @@ d3.text('data/processed_cars.csv', (error, raw) => {
         colorValue = (d) => d.continent;
         colorScale = d3.scaleOrdinal(d3.schemeCategory10);
     }
+
+    // TODO: Compute correlation en fonction des data choisis 
+
+
+    //TODO: faire scale pour cercle des correlations
 
     draw();
 })
@@ -143,4 +173,79 @@ function draw() {
     .attr("y", 6)
     .style("text-anchor", "end")
     .text( (d) => d );
+
+
+    //Correlations Circle
+
+    coorelationCircle.append("defs")
+    .append("marker")
+    .attr("id", "arrow")
+    .attr("viewBox", "0 0 10 10")
+    .attr("refX", "5")
+    .attr("refY", "5")
+    .attr("markerWidth", "6")
+    .attr("markerHeight", "6")
+    .attr("orient", "auto-start-reverse")
+    .append("path")
+    .attr("d", "M 0 0 L 10 5 L 0 10 z")
+    
+    
+    
+    
+    
+    /*
+    <marker id='arrow' viewBox='0 0 10 10' refX='5' refY='5' markerWidth='6' markerHeight='6'
+            orient='auto-start-reverse'>
+          <path d='M 0 0 L 10 5 L 0 10 z' />
+        </marker>");*/
+
+
+    //Draw the circle
+    coorelationCircle.append("g")
+    .attr("class", "corrCircle")
+    .append("circle")
+    .attr("cx", 150)
+    .attr("cy", 150)
+    .attr("r", 120)
+    .attr("stroke", "black")
+    .attr("stroke-width", 2)
+    .attr("fill","white")
+
+    //Draw arrows for features
+    coorelationCircle.selectAll(".feature")
+    .data(correlation)
+    .enter()
+    .append("line")
+    .attr("class", "feature")
+    //.attr("r", 20)
+    .attr("x1", 150)
+    .attr("y1", 150)
+    .attr("x2", (d)=> 150+d.x)
+    .attr("y2", (d)=> 150+d.y)
+    .attr("stroke-width", "2")
+    .attr("stroke", "black")
+    .attr("marker-end", "url(#arrow)");
+
+
+
+
+    /*
+    marker-end="url(#arrow)"
+    <line xmlns="http://www.w3.org/2000/svg" x1="20" y1="100" x2="100" y2="20" stroke="black" stroke-width="2"/>
+    
+        .append("defs").html("    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
+            markerWidth="6" markerHeight="6"
+            orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" />
+        </marker>
+    ")*/
+
+
+
+
+
+    // tooltip with smooth transitions when hovered
+
+
+
 }
