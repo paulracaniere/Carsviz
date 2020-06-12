@@ -153,7 +153,8 @@ function draw() {
         .transition()
         .duration(1000)
         .attr("cx", (d) => xScale(xValue(d)))
-        .attr("cy", (d) => yScale(yValue(d)));
+        .attr("cy", (d) => yScale(yValue(d)))
+        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0) ? 0.0 : 1.0);
 
     // Updated data
     data.attr("fill", (d) => colorScale(colorValue(d)))
