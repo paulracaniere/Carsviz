@@ -16,13 +16,13 @@ let colorScale;
 let correlation = [
     {
         name: "MPG",
-        x: 29.5,
-        y: 30.2
+        x: 0.5,
+        y: 0.2
     },
     {
         name:"Cylinders",
-        x: -40.2,
-        y: 10.4
+        x: -0.2,
+        y: 0.4
     }
 
 ]
@@ -44,8 +44,8 @@ let tooltip = d3.select("body")
 let coorelationCircle = d3.select("body")
                             .append("svg")
                             .attr("id", "correlation")
-                            .attr("width", canvasWidth/2 + margin.left + margin.right)
-                            .attr("height", canvasHeight/2 + margin.top + margin.bottom)
+                            .attr("width", canvasWidth/2 + margin.left + margin.right + 50)
+                            .attr("height", canvasHeight/2 + margin.top + margin.bottom + 50)
                             .append("g")
                             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -188,16 +188,8 @@ function draw() {
     .attr("orient", "auto-start-reverse")
     .append("path")
     .attr("d", "M 0 0 L 10 5 L 0 10 z")
-    
-    
-    
-    
-    
-    /*
-    <marker id='arrow' viewBox='0 0 10 10' refX='5' refY='5' markerWidth='6' markerHeight='6'
-            orient='auto-start-reverse'>
-          <path d='M 0 0 L 10 5 L 0 10 z' />
-        </marker>");*/
+    //draw axis
+
 
 
     //Draw the circle
@@ -220,32 +212,46 @@ function draw() {
     //.attr("r", 20)
     .attr("x1", 150)
     .attr("y1", 150)
-    .attr("x2", (d)=> 150+d.x)
-    .attr("y2", (d)=> 150+d.y)
+    .attr("x2", (d)=> 150+d.x*120)
+    .attr("y2", (d)=> 150+d.y*120)
+    .attr("stroke-width", "2")
+    .attr("stroke", "black")
+    .attr("marker-end", "url(#arrow)");
+
+    coorelationCircle.selectAll(".Featname")
+    .data(correlation)
+    .enter()
+    .append("text")
+    .attr("class", "Featname")
+    .attr("x", (d)=> 150+d.x * 120 + 10)
+    .attr("y", (d)=> 150+ d.y *120+ 10)
+    .text((d)=>d.name);
+
+    // tooltip with smooth transitions when hovered
+
+
+    coorelationCircle.append("g")
+    .append("line")
+    .attr("x1", 150)
+    .attr("y1", 150)
+    .attr("x2", 150)
+    .attr("y2", 0)
+    .attr("stroke-width", "2")
+    .attr("stroke", "black")
+    .attr("marker-end", "url(#arrow)");
+
+    coorelationCircle.append("g")
+    .append("line")
+    .attr("x1", 150)
+    .attr("y1", 150)
+    .attr("x2", 300)
+    .attr("y2", 150)
     .attr("stroke-width", "2")
     .attr("stroke", "black")
     .attr("marker-end", "url(#arrow)");
 
 
-
-
-    /*
-    marker-end="url(#arrow)"
-    <line xmlns="http://www.w3.org/2000/svg" x1="20" y1="100" x2="100" y2="20" stroke="black" stroke-width="2"/>
-    
-        .append("defs").html("    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
-            markerWidth="6" markerHeight="6"
-            orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" />
-        </marker>
-    ")*/
-
-
-
-
-
-    // tooltip with smooth transitions when hovered
-
-
+    coorelationCircle.append("text")
+    .text("Circle of correlation");
 
 }
