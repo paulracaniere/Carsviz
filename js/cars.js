@@ -12,7 +12,7 @@ let colorValue;
 let colorScale;
 
 const engineSpecs = ["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
-let setOfEngineCharIndices = new Set([0, 1]);
+let setOfEngineCharIndices = new Set([0, 1, 2, 3, 4, 5]);
 
 function CSVDataParser(listOfIndices) {
     let k1 = "", k2 = "";
@@ -116,6 +116,15 @@ engineSpecs.forEach((spec) => {
                 setOfEngineCharIndices.delete(engineSpecs.indexOf(spec));
             } else {
                 setOfEngineCharIndices.add(engineSpecs.indexOf(spec));
+            }
+            if (setOfEngineCharIndices.size === 2) {
+                setOfEngineCharIndices.forEach((i_spec) => {
+                    d3.select("#" + engineSpecs[i_spec]).property("disabled", true);
+                });
+            } else {
+                setOfEngineCharIndices.forEach((i_spec) => {
+                    d3.select("#" + engineSpecs[i_spec]).property("disabled", false);
+                });
             }
             console.log([...setOfEngineCharIndices]);
             loadData();
