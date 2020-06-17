@@ -145,11 +145,13 @@ function draw() {
             .duration(500)
             .style("opacity", 0);
         })
+        .attr("cx", (d) => Math.floor(Math.random() * Math.floor(canvasWidth)))
+        .attr("cy", (d) => Math.floor(Math.random() * Math.floor(canvasHeight)))
+        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0) ? 0.0 : 1.0)
         .transition()
-        .duration(1000)
+        .duration(2000)
         .attr("cx", (d) => xScale(xValue(d)))
-        .attr("cy", (d) => yScale(yValue(d)))
-        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0) ? 0.0 : 1.0);
+        .attr("cy", (d) => yScale(yValue(d)));
 
     // Updated data
     data.attr("fill", (d) => colorScale(colorValue(d)))
