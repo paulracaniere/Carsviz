@@ -48,11 +48,12 @@
             .attr("class", "track-overlay")
             .call(d3.drag()
                 .on("start.interrupt", function() { slider.interrupt(); })
-                .on("start drag", function() { handlers[k](x.invert(d3.event.x)); }));
+                .on("start drag", function() { handle.attr("cx", x(x.invert(d3.event.x)));
+                    handlers[k](x.invert(d3.event.x)); }));
 
         const handle = slider.insert("circle", ".track-overlay")
             .attr("class", "handle")
-            .attr("r", 9);
+            .attr("r", 9)
 
         slider.transition() // Gratuitous intro
             .duration(750)//duration of the intro
