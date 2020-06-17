@@ -4,11 +4,11 @@ const canvasHeight = 600 - margin.top - margin.bottom;
 
 let dataset = [];
 
-let xValue;
-let yValue;
+const xValue = (d) => d.PC1;
+const yValue = (d) => d.PC2;
 let xScale;
 let yScale;
-let colorValue;
+const colorValue = (d) => d.continent;
 let colorScale;
 
 const engineSpecs = ["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
@@ -69,28 +69,16 @@ let tooltip = d3.select("body")
 function loadData() {
     d3.text('data/processed_cars.csv', (error, raw) => {
         dataset = d3.csvParse(raw, CSVDataParser([...setOfEngineCharIndices]));
-        console.log("Loaded " + dataset.length + " rows.");
 
         if (dataset.length > 0) {
-            // test data loading
-            console.log("11th row: ", dataset[11]);
-            console.log("12th row: ", dataset[12]);
-            console.log("Last row: ", dataset[dataset.length - 1]);
-
-            // x, y setup
-            xValue = (d) => d.PC1;
-            yValue = (d) => d.PC2;
-
+            // Computing scales
             xScale = d3.scaleLinear()
                 // avoid data to overlap axis
-                .domain([d3.min(dataset, xValue)-2, d3.max(dataset, xValue)+2])
+                .domain([d3.min(dataset, xValue) - 2.0, d3.max(dataset, xValue) + 2.0])
                 .range([0, canvasWidth]);
             yScale = d3.scaleLinear()
-                .domain([d3.min(dataset, yValue)-2, d3.max(dataset, yValue)+2])
+                .domain([d3.min(dataset, yValue) - 2.0, d3.max(dataset, yValue) + 2.0])
                 .range([canvasHeight, 0]);
-
-            // color setup
-            colorValue = (d) => d.continent;
             colorScale = d3.scaleOrdinal(d3.schemeCategory10);
         }
 
@@ -126,7 +114,6 @@ engineSpecs.forEach((spec) => {
                     d3.select("#" + engineSpecs[i_spec]).property("disabled", false);
                 });
             }
-            console.log([...setOfEngineCharIndices]);
             loadData();
         });
     zone.append("label")
@@ -145,7 +132,6 @@ function draw() {
         .append("circle")
         .attr("class", "dot")
         .attr("r", 3)
-        .attr("stroke", "black")
         .attr("fill", (d) => colorScale(colorValue(d)))
         // tooltip with smooth transitions when hovered
         .on("mouseover", function(d) {

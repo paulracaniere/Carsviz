@@ -2,3 +2,8 @@ body
 {
     font-family: sans-serif;
 }
+
+.dot
+{
+	stroke: black;
+}
