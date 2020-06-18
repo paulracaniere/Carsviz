@@ -154,11 +154,11 @@ function draw() {
         })
         .attr("cx", (d) => Math.floor(Math.random() * Math.floor(canvasWidth)))
         .attr("cy", (d) => Math.floor(Math.random() * Math.floor(canvasHeight)))
-        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0) ? 0.0 : 1.0)
+        .attr("opacity", (d) => (xValue(d) === 0.0 || yValue(d) === 0.0) ? 0.0 : 1.0)
         .transition()
         .duration(2000)
-        .attr("cx", (d) => xScale(xValue(d)))
-        .attr("cy", (d) => yScale(yValue(d)));
+        .attr("cx", (d) => (xValue(d) === 0.0 || yValue(d) === 0.0) ? Math.floor(Math.random() * Math.floor(canvasWidth)) : xScale(xValue(d)))
+        .attr("cy", (d) => (xValue(d) === 0.0 || yValue(d) === 0.0) ? Math.floor(Math.random() * Math.floor(canvasHeight)) : yScale(yValue(d)));
 
     // Updated data
     data.attr("fill", (d) => colorScale(colorValue(d)))
@@ -176,8 +176,8 @@ function draw() {
         })
         .transition()
         .duration(1000)
-        .attr("cx", (d) => xScale(xValue(d)))
-        .attr("cy", (d) => yScale(yValue(d)))
+        .attr("cx", (d) => (xValue(d) === 0.0 || yValue(d) === 0.0) ? Math.floor(Math.random() * Math.floor(canvasWidth)) : xScale(xValue(d)))
+        .attr("cy", (d) => (xValue(d) === 0.0 || yValue(d) === 0.0) ? Math.floor(Math.random() * Math.floor(canvasHeight)) : yScale(yValue(d)))
         .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0) ? 0.0 : 1.0);
 
     // FIXME: Show axis when only 2 variables displayed
