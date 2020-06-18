@@ -55,7 +55,7 @@ function CSVDataParser(listOfIndices) {
 
 
 let correlation = [
-    {
+    /*{
         name: "MPG",
         x: 0.5,
         y: 0.2
@@ -64,7 +64,7 @@ let correlation = [
         name:"Cylinders",
         x: -0.2,
         y: 0.4
-    }
+    }*/
 
 ]
 
@@ -104,8 +104,9 @@ function loadData() {
                 .range([canvasHeight, 0]);
             colorScale = d3.scaleOrdinal(d3.schemeCategory10);
         }
-
+        correlation = correlation_generation([...setOfEngineCharIndices]);
         draw();
+        console.log(correlation);
     });
 }
 
@@ -332,5 +333,75 @@ function draw() {
 
     coorelationCircle.append("text")
     .text("Circle of correlation");
+
+}
+
+
+function correlation_generation(listOfIndices){
+    //setOfEngineCharIndices
+    //dataset
+    listOfIndices.sort();
+    let correlations = [];
+    console.log("HEY")
+    for(let indice = 0; indice < listOfIndices.length; indice++){
+        let corPC1 = 0;
+        let corPC2 =0;
+        let data_revelant = dataset.length;
+        let name = engineSpecs[listOfIndices[indice]];
+        for(let id_data = 0; id_data < dataset.length; id_data++){
+
+            switch(name){
+                //["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
+                case "MPG":
+                    console.log("HEIIIIN");
+                    if(dataset[id_data].mpg_norm != 0.0){
+                        corPC1 += dataset[id_data].PC1 * dataset[id_data].mpg_norm;
+                        corPC2 += dataset[id_data].PC2 * dataset[id_data].mpg_norm ;
+                    }
+                    else{
+                        data_revelant -= 1;
+                    }
+                    break;
+                case "Cylinders":
+                    corPC1 += dataset[id_data].PC1 * dataset[id_data].cylinders_norm;
+                    corPC2 += dataset[id_data].PC2 * dataset[id_data].cylinders_norm ;
+                    break;
+                case "Displacement":
+                    corPC1 += dataset[id_data].PC1 * dataset[id_data].displacement_norm;
+                    corPC2 += dataset[id_data].PC2 * dataset[id_data].displacement_norm;
+                    break;
+                case "Horsepower":
+                    if(dataset[id_data].hp_norm != 0.0){
+                        corPC1 += dataset[id_data].PC1 * dataset[id_data].hp_norm;
+                        corPC2 += dataset[id_data].PC2 * dataset[id_data].hp_norm ;    
+                    }
+                    else{
+                        data_revelant -= 1;
+                    }
+                    break;
+                case "Weight":
+                    corPC1 += dataset[id_data].PC1 * dataset[id_data].weight_norm;
+                    corPC2 += dataset[id_data].PC2 * dataset[id_data].weight_norm ;
+                    break;
+                case "Acceleration":
+                    corPC1 += dataset[id_data].PC1 * dataset[id_data].acceleration_norm;
+                    corPC2 += dataset[id_data].PC2 * dataset[id_data].acceleration_norm ;
+                    break;
+            }
+            
+        }
+        corPC1 /= data_revelant;
+        corPC2 /= data_revelant;
+        
+
+        correlations.push({
+        name: name,
+        x: corPC1, //correlation avec PC1
+        y: corPC2 //correlation with PC2
+            
+        });
+    }
+    return correlations;
+
 
 }
