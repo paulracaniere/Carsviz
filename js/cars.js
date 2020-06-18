@@ -1,6 +1,5 @@
-const margin = {top: 20, right: 20, bottom: 40, left: 40};
-const canvasWidth = 600 - margin.left - margin.right;
-const canvasHeight = 600 - margin.top - margin.bottom;
+const canvasWidth = 600;
+const canvasHeight = 600;
 
 let dataset = [];
 
@@ -54,17 +53,26 @@ function CSVDataParser(listOfIndices) {
 }
 
 // create SVG canvas
-let svg = d3.select("body")
-            .append("svg")
-            .attr("id", "canvas")
-            .attr("width", canvasWidth + margin.left + margin.right)
-            .attr("height", canvasHeight + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+let mid = d3.select("body")
+            .append("div")
+            .attr("id", "mid");
 
-// text area for the tooltip
-let tooltip = d3.select("body")
-                .append("div");
+let svg = mid.append("svg")
+            .attr("id", "canvas")
+            .attr("viewBox", "0 0 " + canvasWidth + " " + canvasHeight)
+            .append("g");
+
+let side = mid.append("div")
+            .attr("id", "side");
+
+let interactivity_div = side.append("div")
+                        .attr("id", "filters_canvas");
+
+let tooltip = side.append("div")
+                .attr("id", "tooltip");
+tooltip.append("h2")
+    .text("Tooltip");
+tooltip = tooltip.append("div");
 
 function loadData() {
     d3.text('data/processed_cars.csv', (error, raw) => {
@@ -90,7 +98,6 @@ loadData();
 
 // Interactivity
 // FIXME: Remove that panel when interactivity panel is finished
-let interactivity_div = d3.select("body").append("div");
 interactivity_div.append("h2").text("Filters for visualisation:")
 engineSpecs.forEach((spec) => {
     let zone = interactivity_div.append("div");
@@ -137,8 +144,8 @@ function draw() {
         .on("mouseover", function(d) {
             tooltip.transition()
             .duration(300)
-            .style("opacity", .8);
-            tooltip.html("Model: " + d.car + "<br>Year: " + d.year + "<br>Origin: " + d.continent);
+            .style("opacity", 1);
+            tooltip.html("Model: " + d.car + "<br>Year: 19" + d.year + "<br>Origin: " + d.continent);
         })
         .on("mouseout", function(d) {
             tooltip.transition()
@@ -204,24 +211,24 @@ function draw() {
     // .text("component 2");
    
    // legend
-    var legend = svg.selectAll(".legend")
-    .data(colorScale.domain())
-    .enter()
-    .append("g")
-    .attr("class", "legend")
-    .attr("transform", (d, i) => "translate(0," + i * 20 + ")" );
+    let legend = svg.selectAll(".legend")
+                    .data(colorScale.domain())
+                    .enter()
+                    .append("g")
+                    .attr("class", "legend")
+                    .attr("transform", (d, i) => "translate(0," + (i * 20 + 40) +")" );
 
     // legend shapes
     legend.append("circle")
-    .attr("cx", canvasWidth - 18)
-    .attr("r", 6)
-    .style("fill", colorScale)
-    .attr("stroke", "black");
+        .attr("cx", canvasWidth - 18)
+        .attr("r", 6)
+        .style("fill", colorScale)
+        .attr("stroke", "black");
 
     // legend labels
     legend.append("text")
-    .attr("x", canvasWidth - 27)
-    .attr("y", 6)
-    .style("text-anchor", "end")
-    .text( (d) => d );
+        .attr("x", canvasWidth - 27)
+        .attr("y", 6)
+        .style("text-anchor", "end")
+        .text( (d) => d );
 }
