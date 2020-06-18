@@ -57,13 +57,13 @@ function CSVDataParser(listOfIndices) {
 let correlation = [
     {
         name: "MPG",
-        x: 29.5,
-        y: 30.2
+        x: 0.5,
+        y: 0.2
     },
     {
         name:"Cylinders",
-        x: -40.2,
-        y: 10.4
+        x: -0.2,
+        y: 0.4
     }
 
 ]
@@ -77,13 +77,13 @@ let svg = d3.select("body")
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    let coorelationCircle = d3.select("body")
-                    .append("svg")
-                    .attr("id", "correlation")
-                    .attr("width", canvasWidth/2 + margin.left + margin.right)
-                    .attr("height", canvasHeight/2 + margin.top + margin.bottom)
-                    .append("g")
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+let coorelationCircle = d3.select("body")
+            .append("svg")
+            .attr("id", "correlation")
+            .attr("width", canvasWidth/2 + margin.left + margin.right + 30)
+            .attr("height", canvasHeight/2 + margin.top + margin.bottom+30)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 // text area for the tooltip
 let tooltip = d3.select("body")
@@ -306,7 +306,6 @@ function draw() {
     .attr("y", (d)=> 150+ d.y *120+ 10)
     .text((d)=>d.name);
 
-    // tooltip with smooth transitions when hovered
 
 
     coorelationCircle.append("g")
@@ -332,6 +331,8 @@ function draw() {
 
     coorelationCircle.append("text")
     .text("Circle of correlation");
+
+
     // tooltip with smooth transitions when hovered
 
 
