@@ -11,6 +11,7 @@ let yScale;
 const colorValue = (d) => d.continent;
 let colorScale;
 
+<<<<<<< HEAD
 const engineSpecs = ["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
 let setOfEngineCharIndices = new Set([0, 1, 2, 3, 4, 5]);
 
@@ -52,6 +53,8 @@ function CSVDataParser(listOfIndices) {
         };
     };
 }
+=======
+>>>>>>> 5bccebcbec8bd9969cbc95d1be093ee31ce73ead
 
 
 let correlation = [
@@ -93,6 +96,7 @@ function loadData() {
     d3.text('data/processed_cars.csv', (error, raw) => {
         dataset = d3.csvParse(raw, CSVDataParser([...setOfEngineCharIndices]));
 
+<<<<<<< HEAD
         if (dataset.length > 0) {
             // Computing scales
             xScale = d3.scaleLinear()
@@ -106,9 +110,34 @@ function loadData() {
         }
 
         draw();
+=======
+let coorelationCircle = d3.select("body")
+                            .append("svg")
+                            .attr("id", "correlation")
+                            .attr("width", canvasWidth/2 + margin.left + margin.right + 50)
+                            .attr("height", canvasHeight/2 + margin.top + margin.bottom + 50)
+                            .append("g")
+                            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+d3.text('data/processed_cars.csv', (error, raw) => {
+    dataset = d3.csvParse(raw, (d) => {
+        return {
+            car: d.Car,
+            mpg: +d.MPG,
+            cylinders: +d.Cylinders,
+            displacement: +d.Displacement,
+            hp: +d.Horsepower,
+            weight: +d.Weight,
+            acceleration: +d.Acceleration,
+            year: +d.Model,
+            continent: d.Origin,
+        };
+>>>>>>> 5bccebcbec8bd9969cbc95d1be093ee31ce73ead
     });
 }
 
+<<<<<<< HEAD
 
 loadData();
 
@@ -144,10 +173,18 @@ engineSpecs.forEach((spec) => {
         .attr("for", spec)
         .text(spec);
 });
+=======
+>>>>>>> 5bccebcbec8bd9969cbc95d1be093ee31ce73ead
     // TODO: Compute correlation en fonction des data choisis 
 
 
     //TODO: faire scale pour cercle des correlations
+<<<<<<< HEAD
+=======
+
+    draw();
+})
+>>>>>>> 5bccebcbec8bd9969cbc95d1be093ee31ce73ead
 
 
 function draw() {
@@ -306,6 +343,10 @@ function draw() {
     .attr("y", (d)=> 150+ d.y *120+ 10)
     .text((d)=>d.name);
 
+<<<<<<< HEAD
+=======
+    // tooltip with smooth transitions when hovered
+>>>>>>> 5bccebcbec8bd9969cbc95d1be093ee31ce73ead
 
 
     coorelationCircle.append("g")
@@ -332,9 +373,12 @@ function draw() {
     coorelationCircle.append("text")
     .text("Circle of correlation");
 
+<<<<<<< HEAD
 
     // tooltip with smooth transitions when hovered
 
 
 
+=======
+>>>>>>> 5bccebcbec8bd9969cbc95d1be093ee31ce73ead
 }
