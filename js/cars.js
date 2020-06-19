@@ -256,6 +256,8 @@ function draw() {
 
 
     //Correlations Circle
+    
+
 
     coorelationCircle.append("defs")
     .append("marker")
@@ -270,18 +272,21 @@ function draw() {
     .attr("d", "M 0 0 L 10 5 L 0 10 z")
     //draw axis
 
+        //Draw the circle
+        coorelationCircle
+        .data(correlation)
+        .enter()
+        .append("g")
+        .attr("class", "corrCircle")
+        .append("circle")
+        .attr("cx", 150)
+        .attr("cy", 150)
+        .attr("r", 120)
+        .attr("stroke", "black")
+        .attr("stroke-width", 2)
+        .attr("fill","white")
 
 
-    //Draw the circle
-    coorelationCircle.append("g")
-    .attr("class", "corrCircle")
-    .append("circle")
-    .attr("cx", 150)
-    .attr("cy", 150)
-    .attr("r", 120)
-    .attr("stroke", "black")
-    .attr("stroke-width", 2)
-    .attr("fill","white")
 
     //Draw arrows for features
     coorelationCircle.selectAll(".feature")
@@ -295,7 +300,7 @@ function draw() {
     .attr("x2", (d)=> 150+d.x*120)
     .attr("y2", (d)=> 150+d.y*120)
     .attr("stroke-width", "2")
-    .attr("stroke", "black")
+    .attr("stroke", "red")
     .attr("marker-end", "url(#arrow)");
 
     coorelationCircle.selectAll(".Featname")
@@ -306,6 +311,7 @@ function draw() {
     .attr("x", (d)=> 150+d.x * 120 + 10)
     .attr("y", (d)=> 150+ d.y *120+ 10)
     .text((d)=>d.name);
+
 
     // tooltip with smooth transitions when hovered
 
@@ -342,7 +348,6 @@ function correlation_generation(listOfIndices){
     //dataset
     listOfIndices.sort();
     let correlations = [];
-    console.log("HEY")
     for(let indice = 0; indice < listOfIndices.length; indice++){
         let corPC1 = 0;
         let corPC2 =0;
@@ -350,48 +355,46 @@ function correlation_generation(listOfIndices){
         let name = engineSpecs[listOfIndices[indice]];
         for(let id_data = 0; id_data < dataset.length; id_data++){
 
-            switch(name){
-                //["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
-                case "MPG":
-                    console.log("HEIIIIN");
-                    if(dataset[id_data].mpg_norm != 0.0){
+            if( !(dataset[id_data].PC1 === 0.0 && dataset[id_data].PC2===0.0) ){
+                switch(name){
+                    //["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
+                    case "MPG":
                         corPC1 += dataset[id_data].PC1 * dataset[id_data].mpg_norm;
                         corPC2 += dataset[id_data].PC2 * dataset[id_data].mpg_norm ;
-                    }
-                    else{
-                        data_revelant -= 1;
-                    }
-                    break;
-                case "Cylinders":
-                    corPC1 += dataset[id_data].PC1 * dataset[id_data].cylinders_norm;
-                    corPC2 += dataset[id_data].PC2 * dataset[id_data].cylinders_norm ;
-                    break;
-                case "Displacement":
-                    corPC1 += dataset[id_data].PC1 * dataset[id_data].displacement_norm;
-                    corPC2 += dataset[id_data].PC2 * dataset[id_data].displacement_norm;
-                    break;
-                case "Horsepower":
-                    if(dataset[id_data].hp_norm != 0.0){
+                        break;
+                    case "Cylinders":
+                        corPC1 += dataset[id_data].PC1 * dataset[id_data].cylinders_norm;
+                        corPC2 += dataset[id_data].PC2 * dataset[id_data].cylinders_norm ;
+                        break;
+                    case "Displacement":
+                        corPC1 += dataset[id_data].PC1 * dataset[id_data].displacement_norm;
+                        corPC2 += dataset[id_data].PC2 * dataset[id_data].displacement_norm;
+                        break;
+                    case "Horsepower":
                         corPC1 += dataset[id_data].PC1 * dataset[id_data].hp_norm;
                         corPC2 += dataset[id_data].PC2 * dataset[id_data].hp_norm ;    
-                    }
-                    else{
-                        data_revelant -= 1;
-                    }
-                    break;
-                case "Weight":
-                    corPC1 += dataset[id_data].PC1 * dataset[id_data].weight_norm;
-                    corPC2 += dataset[id_data].PC2 * dataset[id_data].weight_norm ;
-                    break;
-                case "Acceleration":
-                    corPC1 += dataset[id_data].PC1 * dataset[id_data].acceleration_norm;
-                    corPC2 += dataset[id_data].PC2 * dataset[id_data].acceleration_norm ;
-                    break;
+                        break;
+                    case "Weight":
+                        corPC1 += dataset[id_data].PC1 * dataset[id_data].weight_norm;
+                        corPC2 += dataset[id_data].PC2 * dataset[id_data].weight_norm ;
+                        break;
+                    case "Acceleration":
+                        corPC1 += dataset[id_data].PC1 * dataset[id_data].acceleration_norm;
+                        corPC2 += dataset[id_data].PC2 * dataset[id_data].acceleration_norm ;
+                        break;
+                }
             }
+            else{
+                data_revelant -= 1;
+            }
+
+            
             
         }
-        corPC1 /= data_revelant;
-        corPC2 /= data_revelant;
+
+        sig = sigma_PC();
+        corPC1 /= (data_revelant*sig[0]);
+        corPC2 /= (data_revelant*sig[1]);
         
 
         correlations.push({
@@ -402,6 +405,37 @@ function correlation_generation(listOfIndices){
         });
     }
     return correlations;
+}
 
 
+function sigma_PC(){
+    moyPC1 = 0
+    moyPC2 = 0
+    nb_data = dataset.length
+    for(let id_data = 0; id_data < dataset.length; id_data++){
+        if( dataset[id_data].PC1 !=0){
+            moyPC1 += dataset[id_data].PC1;
+            moyPC2 += dataset[id_data].PC2;
+
+        }
+        else{
+            nb_data -= 1;
+        }
+    }
+    moyPC1 /= nb_data;
+    moyPC2 /= nb_data;
+    varPC1 =0;
+    varPC2= 0;
+    for(let id_data = 0; id_data < dataset.length; id_data++){
+        if( dataset[id_data].PC1 !=0){
+            varPC1 += Math.pow(moyPC1 - dataset[id_data].PC1, 2);
+            varPC2 += Math.pow(moyPC2 - dataset[id_data].PC2,2);
+        }
+    }
+
+
+
+    sigmaPC1 = Math.sqrt(varPC1/nb_data);
+    sigmaPC2 = Math.sqrt(varPC2/nb_data);
+    return [sigmaPC1, sigmaPC2]
 }
