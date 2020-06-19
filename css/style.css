@@ -86,16 +86,19 @@ footer>p {
 
 /**** style for the slider ****/
 
-.filter_div
-{
+.filter_div {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width : 450px;
+}
+/* size of the slider */
+.slider_m {
+    flex: 1;
+    height: 10px;
 }
 
-.slider_m /* size of the slider */
-{
-    width: 160px;
-    height: 10px;
+.filter_div>p {
+    padding-left: 10px;
+    width: 100px;
+    text-align: right;
 }

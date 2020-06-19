@@ -23,6 +23,8 @@ const engineSpecs = [
     "Weight",
     "Acceleration",
 ];
+let mins = [],
+    maxs = [];
 let setOfEngineCharIndices = new Set([0, 1, 2, 3, 4, 5]);
 
 function CSVDataParser(listOfIndices) {
@@ -139,8 +141,26 @@ function loadData() {
                 ])
                 .range([canvasHeight - axisMargins.bottom, 50]);
             colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+            maxs = [
+                d3.max(dataset, (d) => d.mpg === 0 ? undefined : d.mpg),
+                d3.max(dataset, (d) => d.cylinders === 0 ? undefined : d.cylinders),
+                d3.max(dataset, (d) => d.displacement === 0 ? undefined : d.displacement),
+                d3.max(dataset, (d) => d.hp === 0 ? undefined : d.hp),
+                d3.max(dataset, (d) => d.weight === 0 ? undefined : d.weight),
+                d3.max(dataset, (d) => d.acceleration === 0 ? undefined : d.acceleration),
+            ];
+            mins = [
+                d3.min(dataset, (d) => d.mpg === 0 ? undefined : d.mpg),
+                d3.min(dataset, (d) => d.cylinders === 0 ? undefined : d.cylinders),
+                d3.min(dataset, (d) => d.displacement === 0 ? undefined : d.displacement),
+                d3.min(dataset, (d) => d.hp === 0 ? undefined : d.hp),
+                d3.min(dataset, (d) => d.weight === 0 ? undefined : d.weight),
+                d3.min(dataset, (d) => d.acceleration === 0 ? undefined : d.acceleration),
+            ];
         }
 
+        loadSliders();
         draw();
     });
 }
@@ -150,7 +170,9 @@ loadData();
 // Interactivity
 interactivity_div.append("h2").text("Filters for visualisation:");
 engineSpecs.forEach((spec) => {
-    let zone = interactivity_div.append("div");
+    let zone = interactivity_div.append("div")
+        .attr("id", "filter_" + spec)
+        .append("div");
     zone.append("input")
         .attr("type", "checkbox")
         .attr("id", spec)
