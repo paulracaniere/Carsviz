@@ -91,3 +91,18 @@ footer>p
 	color: white;
 }
 
+/**** style for the slider ****/
+
+.filter_div
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width : 450px;
+}
+
+.slider_m /* size of the slider */
+{
+    width: 160px;
+    height: 10px;
+}
