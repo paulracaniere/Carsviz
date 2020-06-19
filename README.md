@@ -24,6 +24,12 @@ To be able to run the preprocessing, please install [pandas](https://pandas.pyda
 
 For memory reasons, the data is not provided in this repository. You can find them [here](https://perso.telecom-paristech.fr/eagan/class/igr204/data/cars.csv).
 
-Use the command `make` to install and preprocess the data.
+Use the command `make install` to install and preprocess the data.
 
 This will generate the `processed_cars.csv` in the `data/` directory.
+
+## Usage
+
+Use the command `make run` to start the webserver on port 8000.
+
+Then click [here](http://localhost:8000/) to acces our project.
