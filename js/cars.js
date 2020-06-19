@@ -160,7 +160,8 @@ function loadData() {
             ];
         }
 
-        loadSliders();
+        if (sliders.length === 0) initSliders();
+        updateSliders();
         draw();
     });
 }
