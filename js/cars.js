@@ -71,6 +71,9 @@ function CSVDataParser(listOfIndices) {
     };
 }
 
+
+let correlation = generate_correlations();
+
 // create SVG canvas
 let mid = d3.select("body").append("div").attr("id", "mid");
 
@@ -114,6 +117,14 @@ let interactivity_div = side.append("div").attr("id", "filters_canvas");
 let tooltip = side.append("div").attr("id", "tooltip");
 tooltip.append("h2").text("Tooltip");
 tooltip = tooltip.append("div");
+
+let correlationCircle = side
+    .append("svg")
+    .attr("id", "correlation")
+    .attr("width", canvasWidth/2 + margin.left + margin.right + 100)
+    .attr("height", canvasHeight/2 + margin.top + margin.bottom+100)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 function computeScales() {
     xScale = d3
@@ -172,11 +183,13 @@ function loadData() {
                 d3.min(dataset, (d) => d.acceleration === 0 ? undefined : d.acceleration),
             ];
         }
-
+        correlation = correlation_update([...setOfEngineCharIndices], correlation);
         if (sliders.length === 0) initSliders();
         draw();
+        console.log(correlation);
     });
 }
+
 
 loadData();
 
@@ -219,6 +232,10 @@ engineSpecs.forEach((spec) => {
         });
     zone.append("label").attr("for", spec).text(spec);
 });
+    // TODO: Compute correlation en fonction des data choisis 
+
+
+    //TODO: faire scale pour cercle des correlations
 
 function draw() {
     // draw data as dots
@@ -335,10 +352,111 @@ function draw() {
         .attr("stroke", "black");
 
     // legend labels
-    legend
-        .append("text")
+    legend.append("text")
         .attr("x", canvasWidth - 27)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text((d) => d);
+        .text( (d) => d );
+
+    //Correlations circle
+    defs  = correlationCircle.append("defs")
+    defs.append("marker")
+        .attr("id", "arrow-visible")
+        .attr("viewBox", "0 0 10 10")
+        .attr("refX", "5")
+        .attr("refY", "5")
+        .attr("markerWidth", "6")
+        .attr("markerHeight", "6")
+        .attr("orient", "auto-start-reverse")
+        .attr("fill", "black")
+        .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z")
+
+    defs.append("marker")
+        .attr("id", "arrow-invisible")
+        .attr("viewBox", "0 0 10 10")
+        .attr("refX", "5")
+        .attr("refY", "5")
+        .attr("markerWidth", "6")
+        .attr("markerHeight", "6")
+        .attr("orient", "auto-start-reverse")
+        .attr("fill", "white")
+        .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z")
+    //draw axis
+
+        //Draw the circle
+    correlationCircle
+        .append("g")
+        .attr("class", "corrCircle")
+        .append("circle")
+        .attr("cx", 150)
+        .attr("cy", 150)
+        .attr("r", 130)
+        .attr("stroke", "black")
+        .attr("stroke-width", 2)
+        .attr("fill","None")
+
+    //Draw arrows for features
+    let corr_circle = correlationCircle.selectAll(".feature")
+        .data(correlation)
+
+    corr_circle.enter()
+        .append("line")
+        .attr("class", "feature")
+        .attr("x1", 150)
+        .attr("y1", 150)
+        .attr("x2", (d)=> 150+d.x*120)
+        .attr("y2", (d)=> 150+d.y*120)
+        .attr("stroke-width", "2")
+        .attr("stroke", "black")
+        .attr("marker-end", "url(#arrow-visible)");
+
+    corr_circle
+        .attr("x2", (d)=> 150+d.x*120)
+        .attr("y2", (d)=> 150+d.y*120)
+        .attr("stroke-width", "2")
+        .attr("stroke", "black")
+        .attr("id", (d)=> d.name)
+        .attr("marker-end", (d)=> d.selected ? "url(#arrow-visible)" : "");
+
+    let name_arrows = correlationCircle.selectAll(".Featname").data(correlation)
+    
+    name_arrows.enter()
+        .append("text")
+        .attr("class", "Featname")
+        .attr("x", (d)=> { return 150+d.x * 120 + 10})
+        .attr("y", (d)=> {return 150+ d.y *120+ 10})
+        .text((d)=>d.name);
+
+    name_arrows
+        .attr("x", (d)=> { return 150+d.x * 120})
+        .attr("y", (d)=> {return 150+ d.y *120})
+        .text((d)=>d.selected ? d.name : "");
+
+    // tooltip with smooth transitions when hovered
+    correlationCircle.append("g")
+    .append("line")
+    .attr("x1", 150)
+    .attr("y1", 150)
+    .attr("x2", 150)
+    .attr("y2", 0)
+    .attr("stroke-width", "2")
+    .attr("stroke", "black")
+    .attr("marker-end", "url(#arrow-visible)");
+
+    correlationCircle.append("g")
+    .append("line")
+    .attr("x1", 150)
+    .attr("y1", 150)
+    .attr("x2", 300)
+    .attr("y2", 150)
+    .attr("stroke-width", "2")
+    .attr("stroke", "black")
+    .attr("marker-end", "url(#arrow-visible)");
+
+    correlationCircle.append("text")
+    .text("Circle of correlation");
 }
+
+
