@@ -43,12 +43,15 @@ h2 {
     background-color: rgb(219, 219, 219);
 }
 
+#mid>* {
+    padding: 20px;
+}
+
 #canvas {
     vertical-align: top;
     flex: 3;
     min-width: 500px;
     height: 600px;
-    padding: 20px;
 }
 
 .dot {
@@ -65,11 +68,9 @@ h2 {
 
 #filters_canvas {
     min-width: 200px;
-    padding: 10px;
 }
 
 #tooltip {
-    padding: 10px;
     height: 120px;
 }
 

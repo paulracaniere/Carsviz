@@ -118,13 +118,56 @@ let tooltip = side.append("div").attr("id", "tooltip");
 tooltip.append("h2").text("Tooltip");
 tooltip = tooltip.append("div");
 
-let correlationCircle = side
+let correlation_div = side
+    .append("div")
+    .attr("id", "correlation");
+
+correlation_div.append("h2").text("Correlation circle");
+
+let correlation_svg = correlation_div
     .append("svg")
-    .attr("id", "correlation")
-    .attr("width", canvasWidth/2 + margin.left + margin.right + 100)
-    .attr("height", canvasHeight/2 + margin.top + margin.bottom+100)
+    .attr("width", "400px")
+    .attr("height", "250px")
+    .attr("viewBox", "0 0 320 320")
+    .append("g");
+
+// Definition of arrow shapes
+defs = correlation_svg.append("defs")
+defs.append("marker")
+    .attr("id", "arrow-visible")
+    .attr("viewBox", "0 0 10 10")
+    .attr("refX", "5")
+    .attr("refY", "5")
+    .attr("markerWidth", "6")
+    .attr("markerHeight", "6")
+    .attr("orient", "auto-start-reverse")
+    .attr("fill", "black")
+    .append("path")
+    .attr("d", "M 0 0 L 10 5 L 0 10 z");
+
+defs.append("marker")
+    .attr("id", "arrow-invisible")
+    .attr("viewBox", "0 0 10 10")
+    .attr("refX", "5")
+    .attr("refY", "5")
+    .attr("markerWidth", "6")
+    .attr("markerHeight", "6")
+    .attr("orient", "auto-start-reverse")
+    .attr("fill", "white")
+    .append("path")
+    .attr("d", "M 0 0 L 10 5 L 0 10 z");
+
+// Draw the circle
+correlation_svg
     .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    .attr("class", "corrCircle")
+    .append("circle")
+    .attr("cx", 150)
+    .attr("cy", 150)
+    .attr("r", 130)
+    .attr("stroke", "black")
+    .attr("stroke-width", 2)
+    .attr("fill", "None");
 
 function computeScales() {
     xScale = d3
@@ -186,7 +229,6 @@ function loadData() {
         correlation = correlation_update([...setOfEngineCharIndices], correlation);
         if (sliders.length === 0) initSliders();
         draw();
-        console.log(correlation);
     });
 }
 
@@ -232,10 +274,6 @@ engineSpecs.forEach((spec) => {
         });
     zone.append("label").attr("for", spec).text(spec);
 });
-    // TODO: Compute correlation en fonction des data choisis 
-
-
-    //TODO: faire scale pour cercle des correlations
 
 function draw() {
     // draw data as dots
@@ -248,18 +286,18 @@ function draw() {
         .attr("r", 3)
         .attr("fill", (d) => colorScale(colorValue(d)))
         // tooltip with smooth transitions when hovered
-        .on("mouseover", function (d) {
+        .on("mouseover", function(d) {
             tooltip.transition().duration(300).style("opacity", 1);
             tooltip.html(
                 "Model: " +
-                    d.car +
-                    "<br>Year: 19" +
-                    d.year +
-                    "<br>Origin: " +
-                    d.continent
+                d.car +
+                "<br>Year: 19" +
+                d.year +
+                "<br>Origin: " +
+                d.continent
             );
         })
-        .on("mouseout", function (d) {
+        .on("mouseout", function(d) {
             tooltip.transition().duration(500).style("opacity", 0);
         })
         .attr("cx", (d) => Math.floor(Math.random() * Math.floor(canvasWidth)))
@@ -270,44 +308,36 @@ function draw() {
         .transition()
         .duration(2000)
         .attr("cx", (d) =>
-            xValue(d) === 0.0 || yValue(d) === 0.0
-                ? Math.floor(Math.random() * Math.floor(canvasWidth))
-                : xScale(xValue(d))
+            xValue(d) === 0.0 || yValue(d) === 0.0 ? Math.floor(Math.random() * Math.floor(canvasWidth)) : xScale(xValue(d))
         )
         .attr("cy", (d) =>
-            xValue(d) === 0.0 || yValue(d) === 0.0
-                ? Math.floor(Math.random() * Math.floor(canvasHeight))
-                : yScale(yValue(d))
+            xValue(d) === 0.0 || yValue(d) === 0.0 ? Math.floor(Math.random() * Math.floor(canvasHeight)) : yScale(yValue(d))
         );
 
     // Updated data
     data
         // tooltip with smooth transitions when hovered
-        .on("mouseover", function (d) {
+        .on("mouseover", function(d) {
             tooltip.transition().duration(300).style("opacity", 1);
             tooltip.html(
                 "Model: " +
-                    d.car +
-                    "<br>Year: " +
-                    d.year +
-                    "<br>Origin: " +
-                    d.continent
+                d.car +
+                "<br>Year: " +
+                d.year +
+                "<br>Origin: " +
+                d.continent
             );
         })
-        .on("mouseout", function (d) {
+        .on("mouseout", function(d) {
             tooltip.transition().duration(500).style("opacity", 0);
         })
         .transition()
         .duration(1000)
         .attr("cx", (d) =>
-            xValue(d) === 0.0 || yValue(d) === 0.0
-                ? Math.floor(Math.random() * Math.floor(canvasWidth))
-                : xScale(xValue(d))
+            xValue(d) === 0.0 || yValue(d) === 0.0 ? Math.floor(Math.random() * Math.floor(canvasWidth)) : xScale(xValue(d))
         )
         .attr("cy", (d) =>
-            xValue(d) === 0.0 || yValue(d) === 0.0
-                ? Math.floor(Math.random() * Math.floor(canvasHeight))
-                : yScale(yValue(d))
+            xValue(d) === 0.0 || yValue(d) === 0.0 ? Math.floor(Math.random() * Math.floor(canvasHeight)) : yScale(yValue(d))
         )
         .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0 || !d.filtered_in ? 0.05 : 1.0));
 
@@ -356,49 +386,13 @@ function draw() {
         .attr("x", canvasWidth - 27)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text( (d) => d );
+        .text((d) => d);
 
-    //Correlations circle
-    defs  = correlationCircle.append("defs")
-    defs.append("marker")
-        .attr("id", "arrow-visible")
-        .attr("viewBox", "0 0 10 10")
-        .attr("refX", "5")
-        .attr("refY", "5")
-        .attr("markerWidth", "6")
-        .attr("markerHeight", "6")
-        .attr("orient", "auto-start-reverse")
-        .attr("fill", "black")
-        .append("path")
-        .attr("d", "M 0 0 L 10 5 L 0 10 z")
-
-    defs.append("marker")
-        .attr("id", "arrow-invisible")
-        .attr("viewBox", "0 0 10 10")
-        .attr("refX", "5")
-        .attr("refY", "5")
-        .attr("markerWidth", "6")
-        .attr("markerHeight", "6")
-        .attr("orient", "auto-start-reverse")
-        .attr("fill", "white")
-        .append("path")
-        .attr("d", "M 0 0 L 10 5 L 0 10 z")
-    //draw axis
-
-        //Draw the circle
-    correlationCircle
-        .append("g")
-        .attr("class", "corrCircle")
-        .append("circle")
-        .attr("cx", 150)
-        .attr("cy", 150)
-        .attr("r", 130)
-        .attr("stroke", "black")
-        .attr("stroke-width", 2)
-        .attr("fill","None")
+    // Correlation circle
 
     //Draw arrows for features
-    let corr_circle = correlationCircle.selectAll(".feature")
+    let corr_circle = correlation_svg
+        .selectAll(".feature")
         .data(correlation)
 
     corr_circle.enter()
@@ -406,57 +400,36 @@ function draw() {
         .attr("class", "feature")
         .attr("x1", 150)
         .attr("y1", 150)
-        .attr("x2", (d)=> 150+d.x*120)
-        .attr("y2", (d)=> 150+d.y*120)
+        .attr("x2", (d) => 150 + d.x * 120)
+        .attr("y2", (d) => 150 - d.y * 120)
         .attr("stroke-width", "2")
         .attr("stroke", "black")
+        .attr("id", (d) => d.name)
         .attr("marker-end", "url(#arrow-visible)");
 
     corr_circle
-        .attr("x2", (d)=> 150+d.x*120)
-        .attr("y2", (d)=> 150+d.y*120)
-        .attr("stroke-width", "2")
-        .attr("stroke", "black")
-        .attr("id", (d)=> d.name)
-        .attr("marker-end", (d)=> d.selected ? "url(#arrow-visible)" : "");
+        .transition()
+        .duration(1000)
+        .attr("x2", (d) => 150 + d.x * 120)
+        .attr("y2", (d) => 150 - d.y * 120)
+        .attr("marker-end", (d) => d.selected ? "url(#arrow-visible)" : "");
 
-    let name_arrows = correlationCircle.selectAll(".Featname").data(correlation)
-    
+    let name_arrows = correlation_svg
+        .selectAll(".Featname")
+        .data(correlation);
+
     name_arrows.enter()
         .append("text")
         .attr("class", "Featname")
-        .attr("x", (d)=> { return 150+d.x * 120 + 10})
-        .attr("y", (d)=> {return 150+ d.y *120+ 10})
-        .text((d)=>d.name);
+        .attr("x", (d) => 150 + d.x * 120)
+        .attr("y", (d) => 150 - d.y * 120 - 5)
+        .text((d) => d.name)
+        .attr("opacity", 1);
 
     name_arrows
-        .attr("x", (d)=> { return 150+d.x * 120})
-        .attr("y", (d)=> {return 150+ d.y *120})
-        .text((d)=>d.selected ? d.name : "");
-
-    // tooltip with smooth transitions when hovered
-    correlationCircle.append("g")
-    .append("line")
-    .attr("x1", 150)
-    .attr("y1", 150)
-    .attr("x2", 150)
-    .attr("y2", 0)
-    .attr("stroke-width", "2")
-    .attr("stroke", "black")
-    .attr("marker-end", "url(#arrow-visible)");
-
-    correlationCircle.append("g")
-    .append("line")
-    .attr("x1", 150)
-    .attr("y1", 150)
-    .attr("x2", 300)
-    .attr("y2", 150)
-    .attr("stroke-width", "2")
-    .attr("stroke", "black")
-    .attr("marker-end", "url(#arrow-visible)");
-
-    correlationCircle.append("text")
-    .text("Circle of correlation");
+        .transition()
+        .duration(1000)
+        .attr("x", (d) => 150 + d.x * 120)
+        .attr("y", (d) => 150 - d.y * 120 - 5)
+        .attr("opacity", (d) => d.selected ? 1 : 0);
 }
-
-
