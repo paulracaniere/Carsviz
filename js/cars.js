@@ -1,3 +1,6 @@
+
+
+
 const margin = {top: 20, right: 20, bottom: 40, left: 40};
 const canvasWidth = 600 - margin.left - margin.right;
 const canvasHeight = 600 - margin.top - margin.bottom;
@@ -54,19 +57,7 @@ function CSVDataParser(listOfIndices) {
 }
 
 
-let correlation = [
-    /*{
-        name: "MPG",
-        x: 0.5,
-        y: 0.2
-    },
-    {
-        name:"Cylinders",
-        x: -0.2,
-        y: 0.4
-    }*/
-
-]
+let correlation = generate_correlations();
 
 // create SVG canvas
 let svg = d3.select("body")
@@ -80,8 +71,8 @@ let svg = d3.select("body")
 let coorelationCircle = d3.select("body")
             .append("svg")
             .attr("id", "correlation")
-            .attr("width", canvasWidth/2 + margin.left + margin.right + 30)
-            .attr("height", canvasHeight/2 + margin.top + margin.bottom+30)
+            .attr("width", canvasWidth/2 + margin.left + margin.right + 100)
+            .attr("height", canvasHeight/2 + margin.top + margin.bottom+100)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -104,7 +95,7 @@ function loadData() {
                 .range([canvasHeight, 0]);
             colorScale = d3.scaleOrdinal(d3.schemeCategory10);
         }
-        correlation = correlation_generation([...setOfEngineCharIndices]);
+        correlation = correlation_update([...setOfEngineCharIndices], correlation);
         draw();
         console.log(correlation);
     });
@@ -259,58 +250,85 @@ function draw() {
     
 
 
-    coorelationCircle.append("defs")
+    defs  = coorelationCircle.append("defs")
+    defs
     .append("marker")
-    .attr("id", "arrow")
+    .attr("id", "arrow-visible")
     .attr("viewBox", "0 0 10 10")
     .attr("refX", "5")
     .attr("refY", "5")
     .attr("markerWidth", "6")
     .attr("markerHeight", "6")
     .attr("orient", "auto-start-reverse")
+    .attr("fill", "black")
+    .append("path")
+    .attr("d", "M 0 0 L 10 5 L 0 10 z")
+
+
+    defs.append("marker")
+    .attr("id", "arrow-invisible")
+    .attr("viewBox", "0 0 10 10")
+    .attr("refX", "5")
+    .attr("refY", "5")
+    .attr("markerWidth", "6")
+    .attr("markerHeight", "6")
+    .attr("orient", "auto-start-reverse")
+    .attr("fill", "white")
     .append("path")
     .attr("d", "M 0 0 L 10 5 L 0 10 z")
     //draw axis
 
         //Draw the circle
-        coorelationCircle
-        .data(correlation)
-        .enter()
-        .append("g")
-        .attr("class", "corrCircle")
-        .append("circle")
-        .attr("cx", 150)
-        .attr("cy", 150)
-        .attr("r", 120)
-        .attr("stroke", "black")
-        .attr("stroke-width", 2)
-        .attr("fill","white")
+    coorelationCircle
+    .append("g")
+    .attr("class", "corrCircle")
+    .append("circle")
+    .attr("cx", 150)
+    .attr("cy", 150)
+    .attr("r", 130)
+    .attr("stroke", "black")
+    .attr("stroke-width", 2)
+    .attr("fill","None")
 
 
 
     //Draw arrows for features
-    coorelationCircle.selectAll(".feature")
+    let corr_circle = coorelationCircle.selectAll(".feature")
     .data(correlation)
-    .enter()
+
+    corr_circle.enter()
     .append("line")
     .attr("class", "feature")
-    //.attr("r", 20)
     .attr("x1", 150)
     .attr("y1", 150)
     .attr("x2", (d)=> 150+d.x*120)
     .attr("y2", (d)=> 150+d.y*120)
     .attr("stroke-width", "2")
-    .attr("stroke", "red")
-    .attr("marker-end", "url(#arrow)");
+    .attr("stroke", "black")
+    .attr("marker-end", "url(#arrow-visible)");
 
-    coorelationCircle.selectAll(".Featname")
+    corr_circle
+    .attr("x2", (d)=> 150+d.x*120)
+    .attr("y2", (d)=> 150+d.y*120)
+    .attr("stroke-width", "2")
+    .attr("stroke", "black")
+    .attr("id", (d)=> d.name)
+    .attr("marker-end", (d)=> d.selected ? "url(#arrow-visible)" : "");
+
+    let name_arrows = coorelationCircle.selectAll(".Featname")
     .data(correlation)
-    .enter()
+    
+    name_arrows.enter()
     .append("text")
     .attr("class", "Featname")
-    .attr("x", (d)=> 150+d.x * 120 + 10)
-    .attr("y", (d)=> 150+ d.y *120+ 10)
+    .attr("x", (d)=> { return 150+d.x * 120 + 10})
+    .attr("y", (d)=> {return 150+ d.y *120+ 10})
     .text((d)=>d.name);
+
+    name_arrows
+    .attr("x", (d)=> { return 150+d.x * 120})
+    .attr("y", (d)=> {return 150+ d.y *120})
+    .text((d)=>d.selected ? d.name : "");
 
 
     // tooltip with smooth transitions when hovered
@@ -324,7 +342,7 @@ function draw() {
     .attr("y2", 0)
     .attr("stroke-width", "2")
     .attr("stroke", "black")
-    .attr("marker-end", "url(#arrow)");
+    .attr("marker-end", "url(#arrow-visible)");
 
     coorelationCircle.append("g")
     .append("line")
@@ -334,7 +352,7 @@ function draw() {
     .attr("y2", 150)
     .attr("stroke-width", "2")
     .attr("stroke", "black")
-    .attr("marker-end", "url(#arrow)");
+    .attr("marker-end", "url(#arrow-visible)");
 
 
     coorelationCircle.append("text")
@@ -343,99 +361,3 @@ function draw() {
 }
 
 
-function correlation_generation(listOfIndices){
-    //setOfEngineCharIndices
-    //dataset
-    listOfIndices.sort();
-    let correlations = [];
-    for(let indice = 0; indice < listOfIndices.length; indice++){
-        let corPC1 = 0;
-        let corPC2 =0;
-        let data_revelant = dataset.length;
-        let name = engineSpecs[listOfIndices[indice]];
-        for(let id_data = 0; id_data < dataset.length; id_data++){
-
-            if( !(dataset[id_data].PC1 === 0.0 && dataset[id_data].PC2===0.0) ){
-                switch(name){
-                    //["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
-                    case "MPG":
-                        corPC1 += dataset[id_data].PC1 * dataset[id_data].mpg_norm;
-                        corPC2 += dataset[id_data].PC2 * dataset[id_data].mpg_norm ;
-                        break;
-                    case "Cylinders":
-                        corPC1 += dataset[id_data].PC1 * dataset[id_data].cylinders_norm;
-                        corPC2 += dataset[id_data].PC2 * dataset[id_data].cylinders_norm ;
-                        break;
-                    case "Displacement":
-                        corPC1 += dataset[id_data].PC1 * dataset[id_data].displacement_norm;
-                        corPC2 += dataset[id_data].PC2 * dataset[id_data].displacement_norm;
-                        break;
-                    case "Horsepower":
-                        corPC1 += dataset[id_data].PC1 * dataset[id_data].hp_norm;
-                        corPC2 += dataset[id_data].PC2 * dataset[id_data].hp_norm ;    
-                        break;
-                    case "Weight":
-                        corPC1 += dataset[id_data].PC1 * dataset[id_data].weight_norm;
-                        corPC2 += dataset[id_data].PC2 * dataset[id_data].weight_norm ;
-                        break;
-                    case "Acceleration":
-                        corPC1 += dataset[id_data].PC1 * dataset[id_data].acceleration_norm;
-                        corPC2 += dataset[id_data].PC2 * dataset[id_data].acceleration_norm ;
-                        break;
-                }
-            }
-            else{
-                data_revelant -= 1;
-            }
-
-            
-            
-        }
-
-        sig = sigma_PC();
-        corPC1 /= (data_revelant*sig[0]);
-        corPC2 /= (data_revelant*sig[1]);
-        
-
-        correlations.push({
-        name: name,
-        x: corPC1, //correlation avec PC1
-        y: corPC2 //correlation with PC2
-            
-        });
-    }
-    return correlations;
-}
-
-
-function sigma_PC(){
-    moyPC1 = 0
-    moyPC2 = 0
-    nb_data = dataset.length
-    for(let id_data = 0; id_data < dataset.length; id_data++){
-        if( dataset[id_data].PC1 !=0){
-            moyPC1 += dataset[id_data].PC1;
-            moyPC2 += dataset[id_data].PC2;
-
-        }
-        else{
-            nb_data -= 1;
-        }
-    }
-    moyPC1 /= nb_data;
-    moyPC2 /= nb_data;
-    varPC1 =0;
-    varPC2= 0;
-    for(let id_data = 0; id_data < dataset.length; id_data++){
-        if( dataset[id_data].PC1 !=0){
-            varPC1 += Math.pow(moyPC1 - dataset[id_data].PC1, 2);
-            varPC2 += Math.pow(moyPC2 - dataset[id_data].PC2,2);
-        }
-    }
-
-
-
-    sigmaPC1 = Math.sqrt(varPC1/nb_data);
-    sigmaPC2 = Math.sqrt(varPC2/nb_data);
-    return [sigmaPC1, sigmaPC2]
-}
