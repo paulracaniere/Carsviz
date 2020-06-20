@@ -13,7 +13,7 @@ const yValue = (d) => d.PC2;
 let xScale;
 let yScale;
 const colorValue = (d) => d.continent;
-let colorScale;
+const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
 const engineSpecs = [
     "MPG",
@@ -26,6 +26,8 @@ const engineSpecs = [
 let mins = [],
     maxs = [];
 let setOfEngineCharIndices = new Set([0, 1, 2, 3, 4, 5]);
+
+let previousFilters = [];
 
 function CSVDataParser(listOfIndices) {
     let k1 = "",
@@ -42,7 +44,7 @@ function CSVDataParser(listOfIndices) {
         k2 = "PC2_" + listOfIndices.join("");
     }
 
-    return (d) => {
+    return (d, i) => {
         return {
             car: d.Car,
             mpg: +d.MPG,
@@ -63,6 +65,8 @@ function CSVDataParser(listOfIndices) {
 
             PC1: +d[k1],
             PC2: +d[k2],
+
+            filtered_in: (previousFilters[i] === undefined) ? true : previousFilters[i],
         };
     };
 }
@@ -111,36 +115,45 @@ let tooltip = side.append("div").attr("id", "tooltip");
 tooltip.append("h2").text("Tooltip");
 tooltip = tooltip.append("div");
 
+function computeScales() {
+    xScale = d3
+        .scaleLinear()
+        // avoid data to overlap axis
+        .domain([
+            d3.min(dataset, (d) =>
+                (xValue(d) === 0 || !d.filtered_in) ? undefined : xValue(d)
+            ),
+            d3.max(dataset, (d) =>
+                (xValue(d) === 0 || !d.filtered_in) ? undefined : xValue(d)
+            ),
+        ])
+        .range([axisMargins.left, canvasWidth - 50]);
+    yScale = d3
+        .scaleLinear()
+        .domain([
+            d3.min(dataset, (d) =>
+                (yValue(d) === 0 || !d.filtered_in) ? undefined : yValue(d)
+            ),
+            d3.max(dataset, (d) =>
+                (yValue(d) === 0 || !d.filtered_in) ? undefined : yValue(d)
+            ),
+        ])
+        .range([canvasHeight - axisMargins.bottom, 50]);
+}
+
 function loadData() {
+    if (dataset.length > 0) {
+        for (let i = 0; i < dataset.length; i++) {
+            previousFilters[i] = dataset[i].filtered_in;
+        }
+    }
     d3.text("data/processed_cars.csv", (error, raw) => {
         dataset = d3.csvParse(raw, CSVDataParser([...setOfEngineCharIndices]));
 
         if (dataset.length > 0) {
+
             // Computing scales
-            xScale = d3
-                .scaleLinear()
-                // avoid data to overlap axis
-                .domain([
-                    d3.min(dataset, (d) =>
-                        xValue(d) === 0 ? undefined : xValue(d)
-                    ),
-                    d3.max(dataset, (d) =>
-                        xValue(d) === 0 ? undefined : xValue(d)
-                    ),
-                ])
-                .range([axisMargins.left, canvasWidth - 50]);
-            yScale = d3
-                .scaleLinear()
-                .domain([
-                    d3.min(dataset, (d) =>
-                        yValue(d) === 0 ? undefined : yValue(d)
-                    ),
-                    d3.max(dataset, (d) =>
-                        yValue(d) === 0 ? undefined : yValue(d)
-                    ),
-                ])
-                .range([canvasHeight - axisMargins.bottom, 50]);
-            colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+            computeScales();
 
             maxs = [
                 d3.max(dataset, (d) => d.mpg === 0 ? undefined : d.mpg),
@@ -161,7 +174,6 @@ function loadData() {
         }
 
         if (sliders.length === 0) initSliders();
-        updateSliders();
         draw();
     });
 }
@@ -252,7 +264,7 @@ function draw() {
         );
 
     // Updated data
-    data.attr("fill", (d) => colorScale(colorValue(d)))
+    data
         // tooltip with smooth transitions when hovered
         .on("mouseover", function (d) {
             tooltip.transition().duration(300).style("opacity", 1);
@@ -280,7 +292,7 @@ function draw() {
                 ? Math.floor(Math.random() * Math.floor(canvasHeight))
                 : yScale(yValue(d))
         )
-        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0 ? 0.0 : 1.0));
+        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0 || !d.filtered_in ? 0.05 : 1.0));
 
     // x axis
     xAxis
