@@ -1,9 +1,10 @@
+const canvasWidth = 600;
+const canvasHeight = 600;
 
-
-
-const margin = {top: 20, right: 20, bottom: 40, left: 40};
-const canvasWidth = 600 - margin.left - margin.right;
-const canvasHeight = 600 - margin.top - margin.bottom;
+const axisMargins = {
+    left: 100,
+    bottom: 50,
+};
 
 let dataset = [];
 
@@ -12,13 +13,25 @@ const yValue = (d) => d.PC2;
 let xScale;
 let yScale;
 const colorValue = (d) => d.continent;
-let colorScale;
+const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
-const engineSpecs = ["MPG", "Cylinders", "Displacement", "Horsepower", "Weight", "Acceleration"]
+const engineSpecs = [
+    "MPG",
+    "Cylinders",
+    "Displacement",
+    "Horsepower",
+    "Weight",
+    "Acceleration",
+];
+let mins = [],
+    maxs = [];
 let setOfEngineCharIndices = new Set([0, 1, 2, 3, 4, 5]);
 
+let previousFilters = [];
+
 function CSVDataParser(listOfIndices) {
-    let k1 = "", k2 = "";
+    let k1 = "",
+        k2 = "";
     if (listOfIndices.length < 2) {
         console.error("CSVDataParser: Should not have less than 2 values.");
         return;
@@ -27,11 +40,11 @@ function CSVDataParser(listOfIndices) {
         k2 = engineSpecs[listOfIndices[1]];
     } else {
         listOfIndices.sort();
-        k1 = "PC1_" + listOfIndices.join('');
-        k2 = "PC2_" + listOfIndices.join('');
+        k1 = "PC1_" + listOfIndices.join("");
+        k2 = "PC2_" + listOfIndices.join("");
     }
 
-    return (d) => {
+    return (d, i) => {
         return {
             car: d.Car,
             mpg: +d.MPG,
@@ -52,6 +65,8 @@ function CSVDataParser(listOfIndices) {
 
             PC1: +d[k1],
             PC2: +d[k2],
+
+            filtered_in: (previousFilters[i] === undefined) ? true : previousFilters[i],
         };
     };
 }
@@ -60,42 +75,116 @@ function CSVDataParser(listOfIndices) {
 let correlation = generate_correlations();
 
 // create SVG canvas
-let svg = d3.select("body")
-            .append("svg")
-            .attr("id", "canvas")
-            .attr("width", canvasWidth + margin.left + margin.right)
-            .attr("height", canvasHeight + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+let mid = d3.select("body").append("div").attr("id", "mid");
 
-let coorelationCircle = d3.select("body")
-            .append("svg")
-            .attr("id", "correlation")
-            .attr("width", canvasWidth/2 + margin.left + margin.right + 100)
-            .attr("height", canvasHeight/2 + margin.top + margin.bottom+100)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+let svg = mid
+    .append("svg")
+    .attr("id", "canvas")
+    .attr("viewBox", "0 0 " + canvasWidth + " " + canvasHeight)
+    .append("g");
 
-// text area for the tooltip
-let tooltip = d3.select("body")
-                .append("div");
+// Axis
+let xAxis = svg
+    .append("g")
+    .attr("class", "x axis")
+    .attr(
+        "transform",
+        "translate(0, " + (canvasHeight - 0.7 * axisMargins.bottom) + ")"
+    );
+let xAxisText = svg
+    .append("text")
+    .attr("class", "label")
+    .attr("x", canvasWidth / 2)
+    .attr("y", canvasHeight)
+    .attr("text-anchor", "middle");
+let yAxis = svg
+    .append("g")
+    .attr("class", "y axis")
+    .attr("transform", "translate(" + 0.7 * axisMargins.left + ", 0)");
+let yAxisText = svg
+    .append("text")
+    .attr("class", "label")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0)
+    .attr("x", -canvasHeight / 2)
+    .attr("dy", "1.5em")
+    .attr("text-anchor", "middle");
+
+let side = mid.append("div").attr("id", "side");
+
+let interactivity_div = side.append("div").attr("id", "filters_canvas");
+
+let tooltip = side.append("div").attr("id", "tooltip");
+tooltip.append("h2").text("Tooltip");
+tooltip = tooltip.append("div");
+
+let correlationCircle = side
+    .append("svg")
+    .attr("id", "correlation")
+    .attr("width", canvasWidth/2 + margin.left + margin.right + 100)
+    .attr("height", canvasHeight/2 + margin.top + margin.bottom+100)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+function computeScales() {
+    xScale = d3
+        .scaleLinear()
+        // avoid data to overlap axis
+        .domain([
+            d3.min(dataset, (d) =>
+                (xValue(d) === 0 || !d.filtered_in) ? undefined : xValue(d)
+            ),
+            d3.max(dataset, (d) =>
+                (xValue(d) === 0 || !d.filtered_in) ? undefined : xValue(d)
+            ),
+        ])
+        .range([axisMargins.left, canvasWidth - 50]);
+    yScale = d3
+        .scaleLinear()
+        .domain([
+            d3.min(dataset, (d) =>
+                (yValue(d) === 0 || !d.filtered_in) ? undefined : yValue(d)
+            ),
+            d3.max(dataset, (d) =>
+                (yValue(d) === 0 || !d.filtered_in) ? undefined : yValue(d)
+            ),
+        ])
+        .range([canvasHeight - axisMargins.bottom, 50]);
+}
 
 function loadData() {
-    d3.text('data/processed_cars.csv', (error, raw) => {
+    if (dataset.length > 0) {
+        for (let i = 0; i < dataset.length; i++) {
+            previousFilters[i] = dataset[i].filtered_in;
+        }
+    }
+    d3.text("data/processed_cars.csv", (error, raw) => {
         dataset = d3.csvParse(raw, CSVDataParser([...setOfEngineCharIndices]));
 
         if (dataset.length > 0) {
+
             // Computing scales
-            xScale = d3.scaleLinear()
-                // avoid data to overlap axis
-                .domain([d3.min(dataset, xValue) - 2.0, d3.max(dataset, xValue) + 2.0])
-                .range([0, canvasWidth]);
-            yScale = d3.scaleLinear()
-                .domain([d3.min(dataset, yValue) - 2.0, d3.max(dataset, yValue) + 2.0])
-                .range([canvasHeight, 0]);
-            colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+            computeScales();
+
+            maxs = [
+                d3.max(dataset, (d) => d.mpg === 0 ? undefined : d.mpg),
+                d3.max(dataset, (d) => d.cylinders === 0 ? undefined : d.cylinders),
+                d3.max(dataset, (d) => d.displacement === 0 ? undefined : d.displacement),
+                d3.max(dataset, (d) => d.hp === 0 ? undefined : d.hp),
+                d3.max(dataset, (d) => d.weight === 0 ? undefined : d.weight),
+                d3.max(dataset, (d) => d.acceleration === 0 ? undefined : d.acceleration),
+            ];
+            mins = [
+                d3.min(dataset, (d) => d.mpg === 0 ? undefined : d.mpg),
+                d3.min(dataset, (d) => d.cylinders === 0 ? undefined : d.cylinders),
+                d3.min(dataset, (d) => d.displacement === 0 ? undefined : d.displacement),
+                d3.min(dataset, (d) => d.hp === 0 ? undefined : d.hp),
+                d3.min(dataset, (d) => d.weight === 0 ? undefined : d.weight),
+                d3.min(dataset, (d) => d.acceleration === 0 ? undefined : d.acceleration),
+            ];
         }
         correlation = correlation_update([...setOfEngineCharIndices], correlation);
+        if (sliders.length === 0) initSliders();
         draw();
         console.log(correlation);
     });
@@ -105,16 +194,19 @@ function loadData() {
 loadData();
 
 // Interactivity
-// FIXME: Remove that panel when interactivity panel is finished
-let interactivity_div = d3.select("body").append("div");
-interactivity_div.append("h2").text("Filters for visualisation:")
+interactivity_div.append("h2").text("Filters for visualisation:");
 engineSpecs.forEach((spec) => {
-    let zone = interactivity_div.append("div");
+    let zone = interactivity_div.append("div")
+        .attr("id", "filter_" + spec)
+        .append("div");
     zone.append("input")
         .attr("type", "checkbox")
         .attr("id", spec)
         .attr("name", spec)
-        .property("checked", setOfEngineCharIndices.has(engineSpecs.indexOf(spec)))
+        .property(
+            "checked",
+            setOfEngineCharIndices.has(engineSpecs.indexOf(spec))
+        )
         .on("change", () => {
             if (setOfEngineCharIndices.has(engineSpecs.indexOf(spec))) {
                 setOfEngineCharIndices.delete(engineSpecs.indexOf(spec));
@@ -123,29 +215,31 @@ engineSpecs.forEach((spec) => {
             }
             if (setOfEngineCharIndices.size === 2) {
                 setOfEngineCharIndices.forEach((i_spec) => {
-                    d3.select("#" + engineSpecs[i_spec]).property("disabled", true);
+                    d3.select("#" + engineSpecs[i_spec]).property(
+                        "disabled",
+                        true
+                    );
                 });
             } else {
                 setOfEngineCharIndices.forEach((i_spec) => {
-                    d3.select("#" + engineSpecs[i_spec]).property("disabled", false);
+                    d3.select("#" + engineSpecs[i_spec]).property(
+                        "disabled",
+                        false
+                    );
                 });
             }
             loadData();
         });
-    zone.append("label")
-        .attr("for", spec)
-        .text(spec);
+    zone.append("label").attr("for", spec).text(spec);
 });
     // TODO: Compute correlation en fonction des data choisis 
 
 
     //TODO: faire scale pour cercle des correlations
 
-
 function draw() {
     // draw data as dots
-    let data =  svg.selectAll(".dot")
-                    .data(dataset);
+    let data = svg.selectAll(".dot").data(dataset);
 
     // New data
     data.enter()
@@ -154,187 +248,194 @@ function draw() {
         .attr("r", 3)
         .attr("fill", (d) => colorScale(colorValue(d)))
         // tooltip with smooth transitions when hovered
-        .on("mouseover", function(d) {
-            tooltip.transition()
-            .duration(300)
-            .style("opacity", .8);
-            tooltip.html("Model: " + d.car + "<br>Year: " + d.year + "<br>Origin: " + d.continent);
+        .on("mouseover", function (d) {
+            tooltip.transition().duration(300).style("opacity", 1);
+            tooltip.html(
+                "Model: " +
+                    d.car +
+                    "<br>Year: 19" +
+                    d.year +
+                    "<br>Origin: " +
+                    d.continent
+            );
         })
-        .on("mouseout", function(d) {
-            tooltip.transition()
-            .duration(500)
-            .style("opacity", 0);
+        .on("mouseout", function (d) {
+            tooltip.transition().duration(500).style("opacity", 0);
         })
         .attr("cx", (d) => Math.floor(Math.random() * Math.floor(canvasWidth)))
         .attr("cy", (d) => Math.floor(Math.random() * Math.floor(canvasHeight)))
-        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0) ? 0.0 : 1.0)
+        .attr("opacity", (d) =>
+            xValue(d) === 0.0 || yValue(d) === 0.0 ? 0.0 : 1.0
+        )
         .transition()
         .duration(2000)
-        .attr("cx", (d) => xScale(xValue(d)))
-        .attr("cy", (d) => yScale(yValue(d)));
+        .attr("cx", (d) =>
+            xValue(d) === 0.0 || yValue(d) === 0.0
+                ? Math.floor(Math.random() * Math.floor(canvasWidth))
+                : xScale(xValue(d))
+        )
+        .attr("cy", (d) =>
+            xValue(d) === 0.0 || yValue(d) === 0.0
+                ? Math.floor(Math.random() * Math.floor(canvasHeight))
+                : yScale(yValue(d))
+        );
 
     // Updated data
-    data.attr("fill", (d) => colorScale(colorValue(d)))
+    data
         // tooltip with smooth transitions when hovered
-        .on("mouseover", function(d) {
-            tooltip.transition()
-            .duration(300)
-            .style("opacity", .8);
-            tooltip.html("Model: " + d.car + "<br>Year: " + d.year + "<br>Origin: " + d.continent);
+        .on("mouseover", function (d) {
+            tooltip.transition().duration(300).style("opacity", 1);
+            tooltip.html(
+                "Model: " +
+                    d.car +
+                    "<br>Year: " +
+                    d.year +
+                    "<br>Origin: " +
+                    d.continent
+            );
         })
-        .on("mouseout", function(d) {
-            tooltip.transition()
-            .duration(500)
-            .style("opacity", 0);
+        .on("mouseout", function (d) {
+            tooltip.transition().duration(500).style("opacity", 0);
         })
         .transition()
         .duration(1000)
-        .attr("cx", (d) => xScale(xValue(d)))
-        .attr("cy", (d) => yScale(yValue(d)))
-        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0) ? 0.0 : 1.0);
+        .attr("cx", (d) =>
+            xValue(d) === 0.0 || yValue(d) === 0.0
+                ? Math.floor(Math.random() * Math.floor(canvasWidth))
+                : xScale(xValue(d))
+        )
+        .attr("cy", (d) =>
+            xValue(d) === 0.0 || yValue(d) === 0.0
+                ? Math.floor(Math.random() * Math.floor(canvasHeight))
+                : yScale(yValue(d))
+        )
+        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0 || !d.filtered_in ? 0.05 : 1.0));
 
-    // FIXME: Show axis when only 2 variables displayed
-    // // x axis
-    // svg.append("g")
-    // .attr("class", "x axis")
-    // .attr("transform", "translate(0, " + canvasHeight + ")")
-    // .call(d3.axisBottom(xScale))
-    
-    // // x axis label
-    // svg.append("text")
-    // .attr("class", "label")
-    // .attr("x", canvasWidth/2)
-    // .attr("y", canvasHeight + margin.bottom - 4)
-    // .attr("text-anchor", "middle")
-    // .text("component 1");
+    // x axis
+    xAxis
+        .transition()
+        .duration(1000)
+        .call(d3.axisBottom(xScale))
+        .attr("opacity", setOfEngineCharIndices.size === 2 ? 1 : 0);
+    xAxisText
+        .transition()
+        .duration(1000)
+        .attr("opacity", setOfEngineCharIndices.size === 2 ? 1 : 0)
+        .text(engineSpecs[[...setOfEngineCharIndices][0]]);
+    // y axis
+    yAxis
+        .transition()
+        .duration(1000)
+        .call(d3.axisLeft(yScale))
+        .attr("opacity", setOfEngineCharIndices.size === 2 ? 1 : 0);
+    yAxisText
+        .transition()
+        .duration(1000)
+        .attr("opacity", setOfEngineCharIndices.size === 2 ? 1 : 0)
+        .text(engineSpecs[[...setOfEngineCharIndices][1]]);
 
-    // // y axis
-    // svg.append("g")
-    // .attr("class", "y axis")
-    // .call(d3.axisRight(yScale));
-    
-    // // y axis label
-    // svg.append("text")
-    // .attr("class", "label")
-    // .attr("transform", "rotate(-90)")
-    // .attr("y", -margin.left)
-    // .attr("x", -(canvasHeight/2))
-    // .attr("dy", "1.5em")
-    // .attr("text-anchor", "middle")
-    // .text("component 2");
-   
-   // legend
-    var legend = svg.selectAll(".legend")
-    .data(colorScale.domain())
-    .enter()
-    .append("g")
-    .attr("class", "legend")
-    .attr("transform", (d, i) => "translate(0," + i * 20 + ")" );
+    // legend
+    let legend = svg
+        .selectAll(".legend")
+        .data(colorScale.domain())
+        .enter()
+        .append("g")
+        .attr("class", "legend")
+        .attr("transform", (d, i) => "translate(0," + (i * 20 + 40) + ")");
 
     // legend shapes
-    legend.append("circle")
-    .attr("cx", canvasWidth - 18)
-    .attr("r", 6)
-    .style("fill", colorScale)
-    .attr("stroke", "black");
+    legend
+        .append("circle")
+        .attr("cx", canvasWidth - 18)
+        .attr("r", 6)
+        .style("fill", colorScale)
+        .attr("stroke", "black");
 
     // legend labels
     legend.append("text")
-    .attr("x", canvasWidth - 27)
-    .attr("y", 6)
-    .style("text-anchor", "end")
-    .text( (d) => d );
+        .attr("x", canvasWidth - 27)
+        .attr("y", 6)
+        .style("text-anchor", "end")
+        .text( (d) => d );
 
-
-    //Correlations Circle
-    
-
-
-    defs  = coorelationCircle.append("defs")
-    defs
-    .append("marker")
-    .attr("id", "arrow-visible")
-    .attr("viewBox", "0 0 10 10")
-    .attr("refX", "5")
-    .attr("refY", "5")
-    .attr("markerWidth", "6")
-    .attr("markerHeight", "6")
-    .attr("orient", "auto-start-reverse")
-    .attr("fill", "black")
-    .append("path")
-    .attr("d", "M 0 0 L 10 5 L 0 10 z")
-
+    //Correlations circle
+    defs  = correlationCircle.append("defs")
+    defs.append("marker")
+        .attr("id", "arrow-visible")
+        .attr("viewBox", "0 0 10 10")
+        .attr("refX", "5")
+        .attr("refY", "5")
+        .attr("markerWidth", "6")
+        .attr("markerHeight", "6")
+        .attr("orient", "auto-start-reverse")
+        .attr("fill", "black")
+        .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z")
 
     defs.append("marker")
-    .attr("id", "arrow-invisible")
-    .attr("viewBox", "0 0 10 10")
-    .attr("refX", "5")
-    .attr("refY", "5")
-    .attr("markerWidth", "6")
-    .attr("markerHeight", "6")
-    .attr("orient", "auto-start-reverse")
-    .attr("fill", "white")
-    .append("path")
-    .attr("d", "M 0 0 L 10 5 L 0 10 z")
+        .attr("id", "arrow-invisible")
+        .attr("viewBox", "0 0 10 10")
+        .attr("refX", "5")
+        .attr("refY", "5")
+        .attr("markerWidth", "6")
+        .attr("markerHeight", "6")
+        .attr("orient", "auto-start-reverse")
+        .attr("fill", "white")
+        .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z")
     //draw axis
 
         //Draw the circle
-    coorelationCircle
-    .append("g")
-    .attr("class", "corrCircle")
-    .append("circle")
-    .attr("cx", 150)
-    .attr("cy", 150)
-    .attr("r", 130)
-    .attr("stroke", "black")
-    .attr("stroke-width", 2)
-    .attr("fill","None")
-
-
+    correlationCircle
+        .append("g")
+        .attr("class", "corrCircle")
+        .append("circle")
+        .attr("cx", 150)
+        .attr("cy", 150)
+        .attr("r", 130)
+        .attr("stroke", "black")
+        .attr("stroke-width", 2)
+        .attr("fill","None")
 
     //Draw arrows for features
-    let corr_circle = coorelationCircle.selectAll(".feature")
-    .data(correlation)
+    let corr_circle = correlationCircle.selectAll(".feature")
+        .data(correlation)
 
     corr_circle.enter()
-    .append("line")
-    .attr("class", "feature")
-    .attr("x1", 150)
-    .attr("y1", 150)
-    .attr("x2", (d)=> 150+d.x*120)
-    .attr("y2", (d)=> 150+d.y*120)
-    .attr("stroke-width", "2")
-    .attr("stroke", "black")
-    .attr("marker-end", "url(#arrow-visible)");
+        .append("line")
+        .attr("class", "feature")
+        .attr("x1", 150)
+        .attr("y1", 150)
+        .attr("x2", (d)=> 150+d.x*120)
+        .attr("y2", (d)=> 150+d.y*120)
+        .attr("stroke-width", "2")
+        .attr("stroke", "black")
+        .attr("marker-end", "url(#arrow-visible)");
 
     corr_circle
-    .attr("x2", (d)=> 150+d.x*120)
-    .attr("y2", (d)=> 150+d.y*120)
-    .attr("stroke-width", "2")
-    .attr("stroke", "black")
-    .attr("id", (d)=> d.name)
-    .attr("marker-end", (d)=> d.selected ? "url(#arrow-visible)" : "");
+        .attr("x2", (d)=> 150+d.x*120)
+        .attr("y2", (d)=> 150+d.y*120)
+        .attr("stroke-width", "2")
+        .attr("stroke", "black")
+        .attr("id", (d)=> d.name)
+        .attr("marker-end", (d)=> d.selected ? "url(#arrow-visible)" : "");
 
-    let name_arrows = coorelationCircle.selectAll(".Featname")
-    .data(correlation)
+    let name_arrows = correlationCircle.selectAll(".Featname").data(correlation)
     
     name_arrows.enter()
-    .append("text")
-    .attr("class", "Featname")
-    .attr("x", (d)=> { return 150+d.x * 120 + 10})
-    .attr("y", (d)=> {return 150+ d.y *120+ 10})
-    .text((d)=>d.name);
+        .append("text")
+        .attr("class", "Featname")
+        .attr("x", (d)=> { return 150+d.x * 120 + 10})
+        .attr("y", (d)=> {return 150+ d.y *120+ 10})
+        .text((d)=>d.name);
 
     name_arrows
-    .attr("x", (d)=> { return 150+d.x * 120})
-    .attr("y", (d)=> {return 150+ d.y *120})
-    .text((d)=>d.selected ? d.name : "");
-
+        .attr("x", (d)=> { return 150+d.x * 120})
+        .attr("y", (d)=> {return 150+ d.y *120})
+        .text((d)=>d.selected ? d.name : "");
 
     // tooltip with smooth transitions when hovered
-
-
-    coorelationCircle.append("g")
+    correlationCircle.append("g")
     .append("line")
     .attr("x1", 150)
     .attr("y1", 150)
@@ -344,7 +445,7 @@ function draw() {
     .attr("stroke", "black")
     .attr("marker-end", "url(#arrow-visible)");
 
-    coorelationCircle.append("g")
+    correlationCircle.append("g")
     .append("line")
     .attr("x1", 150)
     .attr("y1", 150)
@@ -354,10 +455,8 @@ function draw() {
     .attr("stroke", "black")
     .attr("marker-end", "url(#arrow-visible)");
 
-
-    coorelationCircle.append("text")
+    correlationCircle.append("text")
     .text("Circle of correlation");
-
 }
 
 
