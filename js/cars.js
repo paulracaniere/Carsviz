@@ -28,6 +28,7 @@ let mins = [],
 let setOfEngineCharIndices = new Set([0, 1, 2, 3, 4, 5]);
 
 let previousFilters = [];
+let previousRange = [];
 
 function CSVDataParser(listOfIndices) {
     let k1 = "",
@@ -67,6 +68,8 @@ function CSVDataParser(listOfIndices) {
             PC2: +d[k2],
 
             filtered_in: (previousFilters[i] === undefined) ? true : previousFilters[i],
+            in_range: (previousRange[i] === undefined) ? true : previousRange[i],
+            researched: false,
         };
     };
 }
@@ -175,10 +178,10 @@ function computeScales() {
         // avoid data to overlap axis
         .domain([
             d3.min(dataset, (d) =>
-                (xValue(d) === 0 || !d.filtered_in) ? undefined : xValue(d)
+                (xValue(d) === 0 || !d.filtered_in || !d.in_range) ? undefined : xValue(d)
             ),
             d3.max(dataset, (d) =>
-                (xValue(d) === 0 || !d.filtered_in) ? undefined : xValue(d)
+                (xValue(d) === 0 || !d.filtered_in || !d.in_range) ? undefined : xValue(d)
             ),
         ])
         .range([axisMargins.left, canvasWidth - 50]);
@@ -186,10 +189,10 @@ function computeScales() {
         .scaleLinear()
         .domain([
             d3.min(dataset, (d) =>
-                (yValue(d) === 0 || !d.filtered_in) ? undefined : yValue(d)
+                (yValue(d) === 0 || !d.filtered_in || !d.in_range) ? undefined : yValue(d)
             ),
             d3.max(dataset, (d) =>
-                (yValue(d) === 0 || !d.filtered_in) ? undefined : yValue(d)
+                (yValue(d) === 0 || !d.filtered_in || !d.in_range) ? undefined : yValue(d)
             ),
         ])
         .range([canvasHeight - axisMargins.bottom, 50]);
@@ -199,6 +202,7 @@ function loadData() {
     if (dataset.length > 0) {
         for (let i = 0; i < dataset.length; i++) {
             previousFilters[i] = dataset[i].filtered_in;
+            previousRange[i] = dataset[i].in_range;
         }
     }
     d3.text("data/processed_cars.csv", (error, raw) => {
@@ -228,6 +232,7 @@ function loadData() {
         }
         correlation = correlation_update([...setOfEngineCharIndices], correlation);
         if (sliders.length === 0) initSliders();
+        if (!researchBuilt) buildResearch();
         draw();
     });
 }
@@ -331,6 +336,7 @@ function draw() {
         .on("mouseout", function(d) {
             tooltip.transition().duration(500).style("opacity", 0);
         })
+        .attr("r", (d) => d.researched ? 10 : 3)
         .transition()
         .duration(1000)
         .attr("cx", (d) =>
@@ -339,7 +345,7 @@ function draw() {
         .attr("cy", (d) =>
             xValue(d) === 0.0 || yValue(d) === 0.0 ? Math.floor(Math.random() * Math.floor(canvasHeight)) : yScale(yValue(d))
         )
-        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0 || !d.filtered_in ? 0.05 : 1.0));
+        .attr("opacity", (d) => (d.PC1 === 0.0 || d.PC2 === 0.0 || !d.filtered_in || !d.in_range ? 0.05 : 1.0));
 
     // x axis
     xAxis
