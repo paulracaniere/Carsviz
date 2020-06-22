@@ -9,7 +9,7 @@ function filterOutAndIn() {
             sliders[5].range().begin <= d.acceleration && d.acceleration <= sliders[5].range().end
         );
     });
-    if (d3.sum(dataset, (d) => d.filtered_in ? 1 : 0) !== 0) computeScales();
+    if (d3.sum(dataset, (d) => d.filtered_in && d.in_range ? 1 : 0) !== 0) computeScales();
     draw();
 }
 
