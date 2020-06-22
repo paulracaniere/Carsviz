@@ -31,13 +31,14 @@ function buildResearch() {
             (d.PC2 - dataset[targetIndex].PC2) * 
             (d.PC2 - dataset[targetIndex].PC2)))) / 100;
         x.domain([min, max]);
+        value_disp.attr("x", x(max));
+        handle.attr("cx", x(max));
         value_disp.text(x.invert(value_disp.attr("x")));
         maxText.text(max);
 
         slider_handler(x.invert(value_disp.attr("x")))
     }
 
-    let research_div = side.append("div").attr("id", "research");
     research_div.append("h2").text("Research");
 
     const select = research_div.append("select").on("change", select_handler);
@@ -87,13 +88,13 @@ function buildResearch() {
 
     const handle = slider.insert("circle", ".track-overlay")
         .attr("class", "handle")
-        .attr("r", 9).attr("cx", x((min + max) / 2.0));
+        .attr("r", 9).attr("cx", x(max));
 
     const value_disp = slider.append("text")
-        .attr("x", x((min + max) / 2.0))
+        .attr("x", x(max))
         .attr("y", 25)
         .attr("text-anchor", "middle")
-        .text((min + max) / 2.0);
+        .text(max);
 
     const minText = svg.append("text")
         .attr("x", 20)

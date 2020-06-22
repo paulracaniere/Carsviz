@@ -115,11 +115,13 @@ let yAxisText = svg
 
 let side = mid.append("div").attr("id", "side");
 
-let interactivity_div = side.append("div").attr("id", "filters_canvas");
-
 let tooltip = side.append("div").attr("id", "tooltip");
 tooltip.append("h2").text("Tooltip");
 tooltip = tooltip.append("div");
+
+let research_div = side.append("div").attr("id", "research");
+
+let interactivity_div = side.append("div").attr("id", "filters_canvas");
 
 let correlation_div = side
     .append("div")
