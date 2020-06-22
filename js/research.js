@@ -12,9 +12,13 @@ function slider_handler(k) {
     console.log(k);
 }
 
+function select_handler() {
+    console.log(dd[select.property('selectedIndex')]);
+}
+
 research_div = d3.select("body").append("div");
 
-const select = research_div.append("select");
+const select = research_div.append("select").on("change", select_handler);
 options = select.selectAll('option').data(dd);
 options.enter().append("option").text(function(d) { return d["Car"] + " " + d["Model"]; });
 
