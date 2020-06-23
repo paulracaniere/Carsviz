@@ -7,42 +7,51 @@ function buildResearch() {
     let max = 15;
 
     function slider_handler(value_slider) {
-        if (targetIndex < 0) return;
-        dataset.forEach((d) => {
-            d.in_range = (
-                Math.sqrt(
-                    (d.PC1 - dataset[targetIndex].PC1) *
-                    (d.PC1 - dataset[targetIndex].PC1) + 
-                    (d.PC2 - dataset[targetIndex].PC2) * 
-                    (d.PC2 - dataset[targetIndex].PC2)) <= value_slider
-            );
-        });
+        if (targetIndex < 0) {
+            dataset.forEach((d) => {
+                d.in_range = true;
+            });
+        } else {
+            dataset.forEach((d) => {
+                d.in_range = (
+                    Math.sqrt(
+                        (d.PC1 - dataset[targetIndex].PC1) *
+                        (d.PC1 - dataset[targetIndex].PC1) + 
+                        (d.PC2 - dataset[targetIndex].PC2) * 
+                        (d.PC2 - dataset[targetIndex].PC2)) <= value_slider
+                );
+            });
+        }
         if (d3.sum(dataset, (d) => d.filtered_in && d.in_range ? 1 : 0) !== 0) computeScales();
         draw(); 
     }
 
     function select_handler() {
-        if (targetIndex >= 0) dataset[targetIndex].researched = false;
-        targetIndex = select.node().selectedIndex;
-        dataset[targetIndex].researched = true;
-        max = Math.floor(100 * d3.max(dataset, (d) => Math.sqrt(
-            (d.PC1 - dataset[targetIndex].PC1) *
-            (d.PC1 - dataset[targetIndex].PC1) + 
-            (d.PC2 - dataset[targetIndex].PC2) * 
-            (d.PC2 - dataset[targetIndex].PC2)))) / 100;
-        x.domain([min, max]);
-        value_disp.attr("x", x(max));
-        handle.attr("cx", x(max));
-        value_disp.text(x.invert(value_disp.attr("x")));
-        maxText.text(max);
-
-        slider_handler(x.invert(value_disp.attr("x")))
+        if (targetIndex >= 0) {
+            dataset[targetIndex].researched = false;
+        }
+        targetIndex = select.node().selectedIndex - 1;
+        if (targetIndex >= 0) {
+            dataset[targetIndex].researched = true;
+            max = Math.floor(100 * d3.max(dataset, (d) => Math.sqrt(
+                (d.PC1 - dataset[targetIndex].PC1) *
+                (d.PC1 - dataset[targetIndex].PC1) + 
+                (d.PC2 - dataset[targetIndex].PC2) * 
+                (d.PC2 - dataset[targetIndex].PC2)))) / 100;
+            x.domain([min, max]);
+            value_disp.attr("x", x(max));
+            handle.attr("cx", x(max));
+            value_disp.text(x.invert(value_disp.attr("x")));
+            maxText.text(max);
+        }
+        slider_handler(x.invert(value_disp.attr("x")));
     }
 
     research_div.append("h2").text("Research");
 
     const select = research_div.append("select").on("change", select_handler);
     let options = select.selectAll('option').data(dataset);
+    select.append("option").text("");
     select.append("optgroup").attr("label", "All cars");
     options.enter().append("option").text(d => d.car + " " + d.year);
 
