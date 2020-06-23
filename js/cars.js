@@ -29,6 +29,7 @@ let setOfEngineCharIndices = new Set([0, 1, 2, 3, 4, 5]);
 
 let previousFilters = [];
 let previousRange = [];
+let previousResearch = [];
 
 function CSVDataParser(listOfIndices) {
     let k1 = "",
@@ -69,7 +70,7 @@ function CSVDataParser(listOfIndices) {
 
             filtered_in: (previousFilters[i] === undefined) ? true : previousFilters[i],
             in_range: (previousRange[i] === undefined) ? true : previousRange[i],
-            researched: false,
+            researched: (previousResearch[i] === undefined) ? false : previousResearch[i],
         };
     };
 }
@@ -205,6 +206,7 @@ function loadData() {
         for (let i = 0; i < dataset.length; i++) {
             previousFilters[i] = dataset[i].filtered_in;
             previousRange[i] = dataset[i].in_range;
+            previousResearch[i] = dataset[i].researched;
         }
     }
     d3.text("data/processed_cars.csv", (error, raw) => {
@@ -290,7 +292,7 @@ function draw() {
     data.enter()
         .append("circle")
         .attr("class", "dot")
-        .attr("r", 3)
+        .attr("r", (d) => d.researched ? 10 : 3)
         .attr("fill", (d) => colorScale(colorValue(d)))
         // tooltip with smooth transitions when hovered
         .on("mouseover", function(d) {
